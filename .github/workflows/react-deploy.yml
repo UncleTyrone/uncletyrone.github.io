@@ -3,7 +3,7 @@ name: Build and Deploy React to GitHub Pages
 on:
   push:
     branches:
-      - react-source
+      - main
 
 permissions:
   contents: write
