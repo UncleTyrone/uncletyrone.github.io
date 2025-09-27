@@ -53,7 +53,7 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
     }
   });
   const [isMuted, setIsMuted] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const setIsDragging = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const audioRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -95,7 +95,7 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
         document.removeEventListener(event, handleFirstInteraction);
       });
     };
-  }, []); // Run once on mount
+  }, [hasUserInteracted]); // Run once on mount
 
   // Handle modal-triggered autoplay
   useEffect(() => {
@@ -170,7 +170,7 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
         audio.removeEventListener('error', handleError);
       };
     }
-  }, [currentTrack]);
+  }, [currentTrack, isPlaying]);
 
   // Handle volume changes without reloading the track
   useEffect(() => {
