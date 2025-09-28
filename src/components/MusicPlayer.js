@@ -5,32 +5,32 @@ const tracks = [
   {
     title: "Enemy Under Arms",
     artist: "Trippie Redd",
-    src: "/uncletyrone-portfolio/music/track1.mp3",
-    image: "/uncletyrone-portfolio/music/track1.png"
+    src: process.env.PUBLIC_URL + "/music/track1.mp3",
+    image: process.env.PUBLIC_URL + "/music/track1.png"
   },
   {
     title: "Until I Die (Unreleased)", 
     artist: "Juice WRLD",
-    src: "/uncletyrone-portfolio/music/track2.mp3",
-    image: "/uncletyrone-portfolio/music/track2.png"
+    src: process.env.PUBLIC_URL + "/music/track2.mp3",
+    image: process.env.PUBLIC_URL + "/music/track2.png"
   },
   {
     title: "Reanimator",
     artist: "Joji Ft. Yves Tumor", 
-    src: "/uncletyrone-portfolio/music/track3.mp3",
-    image: "/uncletyrone-portfolio/music/track3.png"
+    src: process.env.PUBLIC_URL + "/music/track3.mp3",
+    image: process.env.PUBLIC_URL + "/music/track3.png"
   },
   {
     title: "Pneuma",
     artist: "Tool",
-    src: "/uncletyrone-portfolio/music/track4.mp3",
-    image: "/uncletyrone-portfolio/music/track4.png"
+    src: process.env.PUBLIC_URL + "/music/track4.mp3",
+    image: process.env.PUBLIC_URL + "/music/track4.png"
   },
   {
     title: "The Color Violet",
     artist: "Tory Lanez",
-    src: "/uncletyrone-portfolio/music/track5.mp3",
-    image: "/uncletyrone-portfolio/music/track5.png"
+    src: process.env.PUBLIC_URL + "/music/track5.mp3",
+    image: process.env.PUBLIC_URL + "/music/track5.png"
   }
 ];
 

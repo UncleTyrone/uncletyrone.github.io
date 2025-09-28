@@ -29,34 +29,24 @@ function App() {
           zIndex: -2
         }}
       />
-      <video 
-        autoPlay 
-        loop 
-        muted 
-        playsInline 
-        webkit-playsinline="true"
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
         className="background-video"
         onError={(e) => {
           console.error('Video loading error:', e);
-          console.error('Video error details:', e.target.error);
-          if (e.target.error) {
-            console.error('Error code:', e.target.error.code);
-            console.error('Error message:', e.target.error.message);
-          }
-          // Hide video and show fallback
           e.target.style.display = 'none';
         }}
         onLoadStart={() => console.log('Video loading started')}
         onCanPlay={() => {
           console.log('Video can play');
-          // Hide fallback when video loads successfully
           const fallback = document.querySelector('.background-video-fallback');
           if (fallback) fallback.style.display = 'none';
         }}
-        onLoadedData={() => console.log('Video data loaded')}
       >
-        <source src="/uncletyrone-portfolio/background.mp4" type="video/mp4; codecs=avc1.42E01E,mp4a.40.2" />
-        <source src="/uncletyrone-portfolio/background.mp4" type="video/mp4" />
+      <source src={process.env.PUBLIC_URL + "/background.mp4"} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
