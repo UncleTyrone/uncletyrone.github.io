@@ -718,6 +718,67 @@ body {
   margin-top: 0.5rem;
 }
 
+/* Minimize Button */
+.minimize-btn {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.minimize-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.minimize-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Minimized State */
+.music-player.minimized {
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  min-width: 80px;
+  bottom: 2rem;
+  right: 2rem;
+  left: auto;
+}
+
+.minimized-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.minimized-track-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.minimized-track-image:hover {
+  transform: scale(1.05);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero-title {
@@ -758,6 +819,17 @@ body {
     right: 1rem;
     left: 1rem;
     min-width: auto;
+  }
+  
+  /* Mobile minimized state */
+  .music-player.minimized.mobile {
+    bottom: 1rem;
+    right: 1rem;
+    left: auto;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    min-width: 60px;
   }
   
   .track-image {

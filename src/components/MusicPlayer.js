@@ -53,8 +53,10 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
     }
   });
   const [isMuted, setIsMuted] = useState(false);
-  const setIsDragging = useState(false);
+  // const [isDragging, setIsDragging] = useState(false); // Removed unused variable
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -62,6 +64,49 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
   const animationFrameRef = useRef(null);
   const progressBarRef = useRef(null);
   const playerRef = useRef(null);
+
+  // Mobile detection and auto-minimize on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      // Auto-minimize on mobile devices
+      if (mobile) {
+        setIsMinimized(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Error suppression for mobile browsers
+  useEffect(() => {
+    const suppressErrors = (e) => {
+      if (e.message && (
+        e.message.includes('translateDisabled') ||
+        e.message.includes('translation') ||
+        e.message.includes('ethereum') ||
+        e.message.includes('Script error')
+      )) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', suppressErrors);
+    window.addEventListener('unhandledrejection', suppressErrors);
+
+    return () => {
+      window.removeEventListener('error', suppressErrors);
+      window.removeEventListener('unhandledrejection', suppressErrors);
+    };
+  }, []);
 
   // Handle first user interaction for autoplay
   useEffect(() => {
@@ -282,14 +327,23 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
   }, []);
 
   const togglePlayPause = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      if (isPlaying) {
-        audio.pause();
-      } else {
-        audio.play();
+    try {
+      const audio = audioRef.current;
+      if (audio) {
+        if (isPlaying) {
+          audio.pause();
+        } else {
+          audio.play().catch((error) => {
+            console.error('Failed to play audio:', error);
+            setIsPlaying(false);
+            return;
+          });
+        }
+        setIsPlaying(!isPlaying);
       }
-      setIsPlaying(!isPlaying);
+    } catch (error) {
+      console.error('Error in togglePlayPause:', error);
+      setIsPlaying(false);
     }
   };
 
@@ -351,11 +405,11 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
   };
 
   const handleProgressMouseDown = () => {
-    setIsDragging(true);
+    // setIsDragging(true); // Removed unused functionality
   };
 
   const handleProgressMouseUp = () => {
-    setIsDragging(false);
+    // setIsDragging(false); // Removed unused functionality
   };
 
   const formatTime = (time) => {
@@ -363,6 +417,10 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
   };
 
   const progressPercentage = duration ? (currentTime / duration) * 100 : 0;
@@ -438,9 +496,23 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
   };
 
   return (
-    <div className="music-player" ref={playerRef}>
-      {/* Background Waveform */}
-      <div className="waveform-background">
+    <div className={`music-player ${isMinimized ? 'minimized' : ''} ${isMobile ? 'mobile' : ''}`} ref={playerRef}>
+      {/* Minimize Button - Only show in full view */}
+      {!isMinimized && (
+        <button 
+          className="minimize-btn" 
+          onClick={toggleMinimize}
+          aria-label="Minimize player"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13H5v-2h14v2z"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Background Waveform - Only show when not minimized */}
+      {!isMinimized && (
+        <div className="waveform-background">
         <svg
           width="100%"
           height="100%"
@@ -475,7 +547,8 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
             }}
           />
         </svg>
-      </div>
+        </div>
+      )}
 
       <audio
         ref={audioRef}
@@ -502,7 +575,25 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
         Your browser does not support the audio element.
       </audio>
       
-      <div className="player-header" style={{ position: 'relative', zIndex: 2 }}>
+      {/* Minimized View - Track Logo Only */}
+      {isMinimized ? (
+        <div className="minimized-content">
+          <img 
+            src={tracks[currentTrack].image} 
+            alt={`${tracks[currentTrack].title} cover`}
+            className="minimized-track-image"
+            onClick={toggleMinimize}
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+            style={{ cursor: 'pointer' }}
+            title="Click to expand player"
+          />
+        </div>
+      ) : (
+        /* Full View - Complete Player */
+        <>
+          <div className="player-header" style={{ position: 'relative', zIndex: 2 }}>
         <div className="player-title">Now Playing</div>
         {hasError && (
           <div className="error-indicator" style={{ color: '#ff6b6b', fontSize: '0.8rem' }}>
@@ -597,6 +688,8 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
         <span>{formatTime(currentTime)}</span>
         <span>{formatTime(duration)}</span>
       </div>
+        </>
+      )}
     </div>
   );
 };

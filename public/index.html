@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    <meta name="google" content="notranslate" />
+    <meta name="format-detection" content="telephone=no" />
     <meta
       name="description"
       content="UncleTyrone - Modder and Script Developer. Personal portfolio showcasing projects and contributions."
@@ -39,5 +41,75 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    <script>
+      // Override error handling before any other scripts load
+      (function() {
+        const originalAddEventListener = window.addEventListener;
+        const originalConsoleError = console.error;
+        
+        // Override addEventListener to catch error events early
+        window.addEventListener = function(type, listener, options) {
+          if (type === 'error') {
+            const wrappedListener = function(e) {
+              if (e.message && (
+                e.message.includes('translateDisabled') ||
+                e.message.includes('translation') ||
+                e.message.includes('ethereum') ||
+                e.message.includes('Script error')
+              )) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+              }
+              return listener.call(this, e);
+            };
+            return originalAddEventListener.call(this, type, wrappedListener, options);
+          }
+          return originalAddEventListener.call(this, type, listener, options);
+        };
+        
+        // Override console.error to suppress specific errors
+        console.error = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('translateDisabled') || 
+              message.includes('translation') || 
+              message.includes('ethereum') ||
+              message.includes('Script error')) {
+            return; // Suppress these errors
+          }
+          originalConsoleError.apply(console, args);
+        };
+        
+        // Prevent ethereum-related errors
+        if (typeof window !== 'undefined' && !window.ethereum) {
+          window.ethereum = {
+            selectedAddress: null,
+            isConnected: function() { return false; },
+            request: function() { return Promise.reject(new Error('Ethereum not available')); }
+          };
+        }
+        
+        // Specific override for translateDisabled error
+        const originalError = Error;
+        window.Error = function(message) {
+          if (message && message.includes('translateDisabled')) {
+            return new originalError('Suppressed translateDisabled error');
+          }
+          return new originalError(message);
+        };
+        
+        // Override the handleError function that's causing the issue
+        window.handleError = function(error) {
+          if (error && error.message && error.message.includes('translateDisabled')) {
+            return false; // Suppress the error
+          }
+          // Let other errors through
+          if (typeof originalHandleError === 'function') {
+            return originalHandleError(error);
+          }
+        };
+      })();
+    </script>
   </body>
 </html>
