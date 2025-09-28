@@ -78,12 +78,18 @@ const BuildWidget = ({ repository }) => {
           !release.tag_name.toLowerCase().includes('nightly')
         ) || releases[0] || null;
         
-        const latestNightly = releases.find(release => 
+        // Find the most recent beta/alpha/dev/nightly release (not just the first one)
+        const preReleaseReleases = releases.filter(release => 
           release.tag_name.toLowerCase().includes('alpha') ||
           release.tag_name.toLowerCase().includes('beta') ||
           release.tag_name.toLowerCase().includes('dev') ||
           release.tag_name.toLowerCase().includes('nightly')
-        ) || null;
+        );
+        
+        // Sort by published date and get the most recent one
+        const latestNightly = preReleaseReleases
+          .filter(release => release.published_at) // Only releases with valid dates
+          .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))[0] || null;
         
         setLatestRelease(latestRelease);
         setLatestNightly(latestNightly);
@@ -289,7 +295,7 @@ const BuildWidget = ({ repository }) => {
                   className="build-date"
                   style={{ backgroundColor: getStatusColor(getBuildStatus(latestNightly)) }}
                 >
-                  {formatDate(latestNightly.commit?.commit?.committer?.date || latestNightly.commit?.commit?.author?.date)}
+                  {formatDate(latestNightly.published_at)}
                 </div>
               </div>
               
