@@ -277,7 +277,7 @@ const BuildWidget = ({ repository }) => {
             </div>
           )}
 
-          {latestNightly && latestNightly.name !== latestRelease?.tag_name && (
+          {latestNightly && latestNightly.tag_name !== latestRelease?.tag_name && (
             <div className="build-item">
               <div className="build-item-header">
                 <div className="build-type-with-version">
@@ -287,8 +287,8 @@ const BuildWidget = ({ repository }) => {
                   >
                     {getBuildType(latestNightly).charAt(0).toUpperCase() + getBuildType(latestNightly).slice(1)}
                   </span>
-                  <span className="build-version" title={latestNightly.name}>
-                    {latestNightly.name.replace(/^(beta|alpha|dev|nightly)-/i, '')}
+                  <span className="build-version" title={latestNightly.tag_name}>
+                    {latestNightly.tag_name.replace(/^(beta|alpha|dev|nightly)-/i, '')}
                   </span>
                 </div>
                 <div 
@@ -301,7 +301,7 @@ const BuildWidget = ({ repository }) => {
               
               <div className="build-actions">
                 <a 
-                  href={`https://github.com/${repository.full_name}/releases/tag/${latestNightly.name}`}
+                  href={`https://github.com/${repository.full_name}/releases/tag/${latestNightly.tag_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="build-download-btn"
