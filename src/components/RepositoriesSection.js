@@ -23,6 +23,12 @@ const RepositoriesSection = () => {
       console.log('All GitHub API caches cleared! Refreshing page...');
       window.location.reload();
     };
+    
+    // Add function to force refresh repository data
+    window.refreshRepositories = () => {
+      console.log('Force refreshing repository data...');
+      fetchRepositories();
+    };
   }, []);
 
   useEffect(() => {
@@ -44,13 +50,27 @@ const RepositoriesSection = () => {
     if (cachedData && cacheTime && (now - parseInt(cacheTime)) < 1800000) {
       try {
         const reposData = JSON.parse(cachedData);
-        const originalRepos = reposData.filter(repo => !repo.fork);
-        const forks = reposData.filter(repo => repo.fork);
-        setRepositories(originalRepos);
-        setContributions(forks);
-        setLoading(false);
-        console.log('Using cached data');
-        return;
+        
+        // Check if cached data has subscriber counts (new format)
+        const hasSubscriberData = reposData.some(repo => 
+          repo.subscribers_count !== undefined && repo.subscribers_count !== 0
+        );
+        
+        if (hasSubscriberData) {
+          // Use cached data if it has subscriber information
+          const originalRepos = reposData.filter(repo => !repo.fork);
+          const forks = reposData.filter(repo => repo.fork);
+          setRepositories(originalRepos);
+          setContributions(forks);
+          setLoading(false);
+          console.log('Using cached data with subscriber counts');
+          return;
+        } else {
+          // Clear old cache data that doesn't have subscriber counts
+          console.log('Detected old cache data without subscriber counts, clearing cache...');
+          localStorage.removeItem('github-repos-cache');
+          localStorage.removeItem('github-repos-cache-time');
+        }
       } catch (cacheError) {
         console.warn('Failed to parse cached data:', cacheError);
         // Continue to fetch fresh data
@@ -84,18 +104,91 @@ const RepositoriesSection = () => {
         const originalRepos = reposData.filter(repo => !repo.fork);
         console.log('Original repositories (non-forks):', originalRepos.length);
         
-        // Use repositories without fetching subscribers (to avoid rate limiting)
-        const reposWithSubscribers = originalRepos.map(repo => ({
-          ...repo,
-          subscribers_count: 0 // Set to 0 to avoid additional API calls
-        }));
+        // Fetch subscriber counts for each repository
+        const reposWithSubscribers = await Promise.all(
+          originalRepos.map(async (repo) => {
+            try {
+              const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}`, {
+                headers: {
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'UncleTyrone-Portfolio'
+                }
+              });
+              
+              if (subscribersResponse.ok) {
+                const repoDetails = await subscribersResponse.json();
+                console.log(`Repository ${repo.full_name} details:`, {
+                  subscribers_count: repoDetails.subscribers_count,
+                  watchers_count: repoDetails.watchers_count,
+                  watchers: repoDetails.watchers
+                });
+                return {
+                  ...repo,
+                  subscribers_count: repoDetails.subscribers_count || repoDetails.watchers_count || repoDetails.watchers || 0
+                };
+              } else {
+                console.warn(`Failed to fetch subscribers for ${repo.full_name}:`, subscribersResponse.status);
+                return {
+                  ...repo,
+                  subscribers_count: 0
+                };
+              }
+            } catch (error) {
+              console.warn(`Error fetching subscribers for ${repo.full_name}:`, error);
+              return {
+                ...repo,
+                subscribers_count: 0
+              };
+            }
+          })
+        );
         
         setRepositories(reposWithSubscribers);
 
         // For contributions, we'll fetch repositories where the user has contributed
         const forks = reposData.filter(repo => repo.fork);
         console.log('Forked repositories:', forks.length);
-        setContributions(forks);
+        
+        // Fetch subscriber counts for contributions (forks) as well
+        const forksWithSubscribers = await Promise.all(
+          forks.map(async (repo) => {
+            try {
+              const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}`, {
+                headers: {
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'UncleTyrone-Portfolio'
+                }
+              });
+              
+              if (subscribersResponse.ok) {
+                const repoDetails = await subscribersResponse.json();
+                console.log(`Contribution ${repo.full_name} details:`, {
+                  subscribers_count: repoDetails.subscribers_count,
+                  watchers_count: repoDetails.watchers_count,
+                  watchers: repoDetails.watchers
+                });
+                return {
+                  ...repo,
+                  subscribers_count: repoDetails.subscribers_count || repoDetails.watchers_count || repoDetails.watchers || 0
+                };
+              } else {
+                console.warn(`Failed to fetch subscribers for contribution ${repo.full_name}:`, subscribersResponse.status);
+                return {
+                  ...repo,
+                  subscribers_count: 0
+                };
+              }
+            } catch (error) {
+              console.warn(`Error fetching subscribers for contribution ${repo.full_name}:`, error);
+              return {
+                ...repo,
+                subscribers_count: 0
+              };
+            }
+          })
+        );
+        
+        setContributions(forksWithSubscribers);
       } else if (reposResponse.status === 403) {
         console.error('GitHub API rate limit exceeded');
         throw new Error('GitHub API rate limit exceeded. Please try again later.');

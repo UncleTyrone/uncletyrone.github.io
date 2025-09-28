@@ -28,23 +28,50 @@ const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepos
       {/* File Structure Visualization */}
       <FileStructure repository={repository} />
       
-      <div className="repository-languages">
+      {/* Stats Row - Above View Project Button */}
+      {(repository.stargazers_count > 0 || repository.forks_count > 0 || repository.subscribers_count > 0) && (
         <div style={{ 
           display: 'flex', 
           gap: '0.75rem', 
+          fontSize: '0.8rem', 
+          color: '#b3b3b3',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          justifyContent: 'center'
+        }}>
+          {repository.stargazers_count > 0 && (
+            <span title={`${repository.stargazers_count} stars`}>
+              ⭐ {repository.stargazers_count}
+            </span>
+          )}
+          {repository.forks_count > 0 && (
+            <span title={`${repository.forks_count} forks`}>
+              🍴 {repository.forks_count}
+            </span>
+          )}
+          {repository.subscribers_count > 0 && (
+            <span title={`${repository.subscribers_count} watchers`}>
+              👀 {repository.subscribers_count}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Bottom Row: View Project Button and Languages */}
+      <div className="repository-languages">
+        <div style={{ 
+          display: 'flex', 
+          gap: '1rem', 
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          minHeight: '75px'
+          minHeight: '60px'
         }}>
-          {/* Left side: View Project Button and Stats */}
+          {/* Left side: View Project Button */}
           <div style={{ 
             display: 'flex', 
-            gap: '1rem', 
-            alignItems: 'center',
-            flexWrap: 'wrap'
+            alignItems: 'center'
           }}>
-            {/* View Project Button */}
             <a
               href={repository.html_url}
               target="_blank"
@@ -53,33 +80,6 @@ const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepos
             >
               View Project
             </a>
-            
-            {/* Stats */}
-            {(repository.stargazers_count > 0 || repository.forks_count > 0 || repository.subscribers_count > 0) && (
-              <div style={{ 
-                display: 'flex', 
-                gap: '0.75rem', 
-                fontSize: '0.8rem', 
-                color: '#b3b3b3',
-                alignItems: 'center'
-              }}>
-                {repository.stargazers_count > 0 && (
-                  <span title={`${repository.stargazers_count} stars`}>
-                    ⭐ {repository.stargazers_count}
-                  </span>
-                )}
-                {repository.forks_count > 0 && (
-                  <span title={`${repository.forks_count} forks`}>
-                    🍴 {repository.forks_count}
-                  </span>
-                )}
-                {repository.subscribers_count > 0 && (
-                  <span title={`${repository.subscribers_count} watchers`}>
-                    👀 {repository.subscribers_count}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           
           {/* Right side: Mini Language Chart */}
