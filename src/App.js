@@ -9,17 +9,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 function App() {
   const [showModal, setShowModal] = useState(true);
   const [shouldStartMusic, setShouldStartMusic] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Mobile detection and video autoplay handling
+  // Video autoplay handling
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      setIsMobile(mobile);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
     
     // Handle mobile video autoplay
     const handleUserInteraction = () => {
@@ -36,7 +28,6 @@ function App() {
     document.addEventListener('click', handleUserInteraction, { once: true });
     
     return () => {
-      window.removeEventListener('resize', checkMobile);
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('click', handleUserInteraction);
     };
