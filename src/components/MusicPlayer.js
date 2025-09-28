@@ -43,10 +43,10 @@ const MusicPlayer = ({ shouldStartPlaying }) => {
   const [audioData, setAudioData] = useState(new Array(80).fill(0));
   const [audioEnergy, setAudioEnergy] = useState(0);
   const [volume, setVolume] = useState(() => {
-    // Load volume from localStorage or default to 1
+    // Load volume from localStorage or default to 0.5
     try {
       const savedVolume = localStorage.getItem('musicPlayerVolume');
-      return savedVolume ? parseFloat(savedVolume) : 1;
+      return savedVolume ? parseFloat(savedVolume) : 0.5;
     } catch (error) {
       console.log('localStorage not available, using default volume');
       return 1;
