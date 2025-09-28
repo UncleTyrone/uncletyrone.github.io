@@ -57,19 +57,6 @@ const RepositoriesSection = () => {
         subscribers_count: 0,
         fork: false,
         updated_at: new Date().toISOString()
-      },
-      {
-        id: 2,
-        name: "uncletyronepics",
-        full_name: "UncleTyrone/uncletyronepics",
-        description: "Collection of images and assets",
-        html_url: "https://github.com/UncleTyrone/uncletyronepics",
-        language: null,
-        stargazers_count: 0,
-        forks_count: 0,
-        subscribers_count: 0,
-        fork: false,
-        updated_at: new Date().toISOString()
       }
     ];
     
@@ -184,11 +171,6 @@ const RepositoriesSection = () => {
   };
 
   const getRepositoryLanguages = (repository) => {
-    // Special case for uncletyronepics - add Misc tag
-    if (repository.name === 'uncletyronepics') {
-      return ['Misc'];
-    }
-    
     // Return the primary language or empty array
     return repository.language ? [repository.language] : [];
   };

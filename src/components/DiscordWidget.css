@@ -97,6 +97,18 @@
   font-size: 0.875rem;
 }
 
+.member-count {
+  color: #60a5fa;
+  font-weight: 500;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.highlight-rescheduled {
+  color: #5865f2;
+  font-weight: 700;
+}
+
 /* Discord Stats */
 .discord-stats {
   display: flex;
