@@ -24,9 +24,6 @@ const ModalOverlay = ({ onStart, isVisible }) => {
           <span>Explore Portfolio</span>
         </button>
         
-        <div className="modal-footer">
-          <p className="modal-note">Experience with ambient music</p>
-        </div>
       </div>
     </div>
   );

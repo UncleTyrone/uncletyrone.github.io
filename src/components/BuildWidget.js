@@ -21,7 +21,10 @@ const BuildWidget = ({ repository }) => {
       const releaseResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/releases/latest`);
       if (releaseResponse.ok) {
         const releaseData = await releaseResponse.json();
-        setLatestRelease(releaseData);
+        // Only set if we have valid data
+        if (releaseData && releaseData.tag_name) {
+          setLatestRelease(releaseData);
+        }
       }
 
       // For nightly builds, we'll look for tags with "nightly" or "dev" in the name
@@ -34,7 +37,7 @@ const BuildWidget = ({ repository }) => {
           tag.name.toLowerCase().includes('dev') ||
           tag.name.toLowerCase().includes('beta')
         );
-        if (nightlyTag) {
+        if (nightlyTag && nightlyTag.name) {
           setLatestNightly(nightlyTag);
         }
       }
@@ -52,22 +55,50 @@ const BuildWidget = ({ repository }) => {
   }, [fetchBuildData]);
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    if (!dateString) return 'INVALID DATE';
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'INVALID DATE';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.warn('Date formatting error:', error);
+      return 'INVALID DATE';
+    }
   };
 
   const getBuildStatus = (build) => {
     if (!build) return 'unknown';
-    const publishedDate = new Date(build.published_at || build.commit?.commit?.committer?.date);
-    const daysSince = (Date.now() - publishedDate.getTime()) / (1000 * 60 * 60 * 24);
     
-    if (daysSince >= 365) return 'old'; // 1 year+
-    if (daysSince >= 30) return 'monthly'; // 1 month+
-    return 'recent'; // everything else
+    const dateString = build.published_at || build.commit?.commit?.committer?.date;
+    if (!dateString) return 'unknown';
+    
+    try {
+      const publishedDate = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(publishedDate.getTime())) {
+        return 'unknown';
+      }
+      
+      const daysSince = (Date.now() - publishedDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (daysSince >= 365) return 'old'; // 1 year+
+      if (daysSince >= 30) return 'monthly'; // 1 month+
+      return 'recent'; // everything else
+    } catch (error) {
+      console.warn('Build status calculation error:', error);
+      return 'unknown';
+    }
   };
 
   const getStatusColor = (status) => {
@@ -75,7 +106,8 @@ const BuildWidget = ({ repository }) => {
       case 'recent': return '#10b981'; // green
       case 'monthly': return '#f59e0b'; // yellow
       case 'old': return '#ef4444'; // red
-      default: return '#6b7280';
+      case 'unknown': return '#6b7280'; // gray
+      default: return '#6b7280'; // gray
     }
   };
 
@@ -85,6 +117,7 @@ const BuildWidget = ({ repository }) => {
     const tagName = build.tag_name || build.name || '';
     const name = tagName.toLowerCase();
     
+    // Check for specific patterns to avoid duplicates
     if (name.includes('alpha')) return 'alpha';
     if (name.includes('beta')) return 'beta';
     if (name.includes('dev')) return 'dev';
@@ -146,7 +179,9 @@ const BuildWidget = ({ repository }) => {
                   >
                     {getBuildType(latestRelease).charAt(0).toUpperCase() + getBuildType(latestRelease).slice(1)}
                   </span>
-                  <span className="build-version">{latestRelease.tag_name}</span>
+                  <span className="build-version" title={latestRelease.tag_name}>
+                    {latestRelease.tag_name}
+                  </span>
                 </div>
                 <div 
                   className="build-date"
@@ -158,8 +193,8 @@ const BuildWidget = ({ repository }) => {
               
               {latestRelease.body && (
                 <div className="build-description">
-                  {latestRelease.body.length > 100 
-                    ? latestRelease.body.substring(0, 100) + '...' 
+                  {latestRelease.body.length > 150 
+                    ? latestRelease.body.substring(0, 150) + '...' 
                     : latestRelease.body
                   }
                 </div>
@@ -193,13 +228,15 @@ const BuildWidget = ({ repository }) => {
                   >
                     {getBuildType(latestNightly).charAt(0).toUpperCase() + getBuildType(latestNightly).slice(1)}
                   </span>
-                  <span className="build-version">{latestNightly.name}</span>
+                  <span className="build-version" title={latestNightly.name}>
+                    {latestNightly.name}
+                  </span>
                 </div>
                 <div 
                   className="build-date"
                   style={{ backgroundColor: getStatusColor(getBuildStatus(latestNightly)) }}
                 >
-                  {formatDate(latestNightly.commit?.commit?.committer?.date)}
+                  {formatDate(latestNightly.commit?.commit?.committer?.date || latestNightly.commit?.commit?.author?.date)}
                 </div>
               </div>
               
@@ -218,7 +255,19 @@ const BuildWidget = ({ repository }) => {
 
           {!latestRelease && !latestNightly && (
             <div className="build-no-data">
-              No builds available
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                color: '#9ca3af'
+              }}>
+                <span>📦</span>
+                <span>No builds available</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                  Check back later for releases
+                </span>
+              </div>
             </div>
           )}
         </div>
