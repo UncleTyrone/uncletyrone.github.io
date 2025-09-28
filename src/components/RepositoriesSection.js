@@ -8,6 +8,23 @@ const RepositoriesSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Add global function to clear all GitHub API caches (for debugging)
+  useEffect(() => {
+    window.clearAllGitHubCaches = () => {
+      const keys = Object.keys(localStorage);
+      const githubKeys = keys.filter(key => 
+        key.includes('github') || 
+        key.includes('build-data') || 
+        key.includes('languages-') || 
+        key.includes('file-structure-') ||
+        key.includes('discord-server')
+      );
+      githubKeys.forEach(key => localStorage.removeItem(key));
+      console.log('All GitHub API caches cleared! Refreshing page...');
+      window.location.reload();
+    };
+  }, []);
+
   useEffect(() => {
     fetchRepositories();
   }, []);

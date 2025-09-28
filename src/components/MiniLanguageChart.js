@@ -15,6 +15,17 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const chartRef = useRef(null);
 
+  // Add global function to clear language cache (for debugging)
+  useEffect(() => {
+    window.clearLanguageCache = () => {
+      const keys = Object.keys(localStorage);
+      const languageKeys = keys.filter(key => key.startsWith('languages-') || key.includes('languages'));
+      languageKeys.forEach(key => localStorage.removeItem(key));
+      console.log('Language cache cleared! Refreshing page...');
+      window.location.reload();
+    };
+  }, []);
+
   useEffect(() => {
     const fetchRepositoryLanguages = async () => {
       if (!repository || !repository.full_name) {
@@ -41,48 +52,88 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
         }
       }
 
-      // Use dynamic fallback based on repository type to avoid rate limiting
-      const generateFallbackLanguage = (repo) => {
-        const repoName = repo.name.toLowerCase();
-        const description = (repo.description || '').toLowerCase();
+      // Try to fetch real language data from GitHub API
+      try {
+        console.log('Fetching language data for:', repository.full_name);
         
-        if (repoName.includes('website') || repoName.includes('portfolio') || repoName.includes('uncletyrone')) {
-          return {
-            languages: ['JavaScript', 'CSS', 'HTML'],
-            languageData: { 'JavaScript': 60, 'CSS': 25, 'HTML': 15 }
-          };
-        } else if (repoName.includes('mod') || repoName.includes('script') || description.includes('mod')) {
-          return {
-            languages: ['JavaScript', 'Python'],
-            languageData: { 'JavaScript': 70, 'Python': 30 }
-          };
-        } else if (description.includes('api') || repoName.includes('api')) {
-          return {
-            languages: ['JavaScript', 'TypeScript'],
-            languageData: { 'JavaScript': 60, 'TypeScript': 40 }
-          };
-        } else if (description.includes('bot') || repoName.includes('bot')) {
-          return {
-            languages: ['JavaScript', 'JSON'],
-            languageData: { 'JavaScript': 85, 'JSON': 15 }
-          };
+        const languagesResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/languages`, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'UncleTyrone-Portfolio'
+          }
+        });
+        
+        if (languagesResponse.ok) {
+          const languageData = await languagesResponse.json();
+          console.log('Successfully fetched language data:', languageData);
+          
+          const languages = Object.keys(languageData);
+          
+          if (languages.length > 0) {
+            setLanguages(languages);
+            setLanguageData(languageData);
+            
+            // Cache the real data
+            localStorage.setItem(cacheKey, JSON.stringify({ languages, languageData }));
+            localStorage.setItem(`${cacheKey}-time`, now.toString());
+            
+            console.log('Language data cached successfully');
+          } else {
+            throw new Error('No language data available');
+          }
+        } else if (languagesResponse.status === 403) {
+          console.warn('GitHub API rate limit exceeded. Using fallback data.');
+          throw new Error('Rate limit exceeded');
         } else {
-          // Default based on primary language or JavaScript
-          const primaryLang = repo.language || 'JavaScript';
-          return {
-            languages: [primaryLang],
-            languageData: { [primaryLang]: 100 }
-          };
+          console.warn('Failed to fetch language data:', languagesResponse.status);
+          throw new Error('API request failed');
         }
-      };
-      
-      const fallbackData = generateFallbackLanguage(repository);
-      setLanguages(fallbackData.languages);
-      setLanguageData(fallbackData.languageData);
-      
-      // Cache the fallback data
-      localStorage.setItem(cacheKey, JSON.stringify(fallbackData));
-      localStorage.setItem(`${cacheKey}-time`, now.toString());
+      } catch (apiError) {
+        console.error('Error fetching language data:', apiError);
+        
+        // Use dynamic fallback based on repository type
+        const generateFallbackLanguage = (repo) => {
+          const repoName = repo.name.toLowerCase();
+          const description = (repo.description || '').toLowerCase();
+          
+          if (repoName.includes('website') || repoName.includes('portfolio') || repoName.includes('uncletyrone')) {
+            return {
+              languages: ['JavaScript', 'CSS', 'HTML'],
+              languageData: { 'JavaScript': 60, 'CSS': 25, 'HTML': 15 }
+            };
+          } else if (repoName.includes('mod') || repoName.includes('script') || description.includes('mod')) {
+            return {
+              languages: ['JavaScript', 'Python'],
+              languageData: { 'JavaScript': 70, 'Python': 30 }
+            };
+          } else if (description.includes('api') || repoName.includes('api')) {
+            return {
+              languages: ['JavaScript', 'TypeScript'],
+              languageData: { 'JavaScript': 60, 'TypeScript': 40 }
+            };
+          } else if (description.includes('bot') || repoName.includes('bot')) {
+            return {
+              languages: ['JavaScript', 'JSON'],
+              languageData: { 'JavaScript': 85, 'JSON': 15 }
+            };
+          } else {
+            // Default based on primary language or JavaScript
+            const primaryLang = repo.language || 'JavaScript';
+            return {
+              languages: [primaryLang],
+              languageData: { [primaryLang]: 100 }
+            };
+          }
+        };
+        
+        const fallbackData = generateFallbackLanguage(repository);
+        setLanguages(fallbackData.languages);
+        setLanguageData(fallbackData.languageData);
+        
+        // Cache the fallback data
+        localStorage.setItem(cacheKey, JSON.stringify(fallbackData));
+        localStorage.setItem(`${cacheKey}-time`, now.toString());
+      }
       
       setLoading(false);
     };
