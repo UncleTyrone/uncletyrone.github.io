@@ -16,11 +16,33 @@ const RepositoriesSection = () => {
     try {
       setLoading(true);
       
-      // Fetch user's public repositories
-      const reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=100');
-      if (!reposResponse.ok) {
-        throw new Error('Failed to fetch repositories');
+      // Fetch user's public repositories with retry logic
+      let reposResponse;
+      let retries = 3;
+      
+      while (retries > 0) {
+        reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=100', {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'UncleTyrone-Portfolio'
+          }
+        });
+        
+        if (reposResponse.ok) {
+          break;
+        } else if (reposResponse.status === 403) {
+          // Rate limited, wait and retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          retries--;
+        } else {
+          throw new Error(`GitHub API error: ${reposResponse.status} ${reposResponse.statusText}`);
+        }
       }
+      
+      if (!reposResponse.ok) {
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      }
+      
       const reposData = await reposResponse.json();
       
       // Filter out forks and get only original repositories
@@ -34,7 +56,8 @@ const RepositoriesSection = () => {
 
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Repository fetch error:', err);
+      setError(`Failed to load repositories: ${err.message}`);
       setLoading(false);
     }
   };

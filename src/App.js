@@ -3,6 +3,7 @@ import './App.css';
 import HeroSection from './components/HeroSection';
 import MusicPlayer from './components/MusicPlayer';
 import RepositoriesSection from './components/RepositoriesSection';
+import DiscordWidget from './components/DiscordWidget';
 import ModalOverlay from './components/ModalOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -106,6 +107,7 @@ function App() {
       {/* Main Content */}
       <div className="main-content">
         <HeroSection />
+        <DiscordWidget />
         <RepositoriesSection />
       </div>
       

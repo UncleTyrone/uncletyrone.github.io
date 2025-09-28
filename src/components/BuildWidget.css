@@ -1,0 +1,155 @@
+/* Build Widget */
+.build-widget {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.build-widget-header {
+  margin-bottom: 1rem;
+}
+
+.build-widget-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+}
+
+.build-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.build-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.build-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.build-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.build-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.build-type-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.build-type-with-version {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.build-type {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.build-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.build-version {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.build-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+}
+
+.build-downloads {
+  font-size: 0.75rem;
+  color: #8b5cf6;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.build-loading,
+.build-error,
+.build-no-data {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.build-error {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .build-widget {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+  
+  .build-item {
+    padding: 0.75rem;
+  }
+  
+  .build-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .build-status {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .build-widget-header h4 {
+    font-size: 0.875rem;
+  }
+  
+  .build-version {
+    font-size: 0.875rem;
+  }
+  
+  .build-type {
+    font-size: 0.75rem;
+  }
+}

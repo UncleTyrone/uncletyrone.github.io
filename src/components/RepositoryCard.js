@@ -1,4 +1,5 @@
 import React from 'react';
+import BuildWidget from './BuildWidget';
 
 const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepositoryLanguages }) => {
   const languages = getRepositoryLanguages(repository);
@@ -69,6 +70,8 @@ const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepos
           View Project
         </a>
       </div>
+      
+      <BuildWidget repository={repository} />
     </div>
   );
 };
