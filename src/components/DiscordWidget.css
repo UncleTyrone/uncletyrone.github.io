@@ -60,15 +60,16 @@
 }
 
 .discord-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #5865f2, #7289da);
-  border-radius: 16px;
+  width: 120px;
+  height: 120px;
+  background: transparent;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 1rem;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .discord-icon svg {
@@ -78,10 +79,15 @@
 }
 
 .discord-server-image {
-  width: 220px;
-  height: 220px;
+  width: 300%;
+  height: 300%;
   object-fit: contain;
-  border-radius: 16px;
+  border-radius: 0px;
+  transition: transform 0.3s ease;
+}
+
+.discord-icon:hover .discord-server-image {
+  transform: scale(1.05);
 }
 
 .discord-info h3 {
