@@ -24,28 +24,35 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
       }
 
       try {
+        console.log(`Fetching languages for repository: ${repository.full_name}`);
         const response = await fetch(`https://api.github.com/repos/${repository.full_name}/languages`);
+        console.log(`Language API response status for ${repository.full_name}:`, response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log(`Language data for ${repository.full_name}:`, data);
           const languageNames = Object.keys(data);
           
           if (languageNames.length > 0) {
             setLanguages(languageNames);
             setLanguageData(data);
+            console.log(`Set languages for ${repository.full_name}:`, languageNames);
           } else {
             // Fallback to primary language or 'Other'
             const fallbackLang = repository.language || 'Other';
             setLanguages([fallbackLang]);
             setLanguageData({ [fallbackLang]: 100 });
+            console.log(`No languages found, using fallback for ${repository.full_name}:`, fallbackLang);
           }
         } else {
+          console.warn(`Language API failed for ${repository.full_name}:`, response.status);
           // Fallback to primary language
           const fallbackLang = repository.language || 'Other';
           setLanguages([fallbackLang]);
           setLanguageData({ [fallbackLang]: 100 });
         }
       } catch (error) {
-        console.warn('Failed to fetch repository languages:', error);
+        console.error(`Failed to fetch repository languages for ${repository.full_name}:`, error);
         // Fallback to primary language
         const fallbackLang = repository.language || 'Other';
         setLanguages([fallbackLang]);

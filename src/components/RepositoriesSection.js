@@ -21,8 +21,13 @@ const RepositoriesSection = () => {
     const cacheTime = localStorage.getItem('github-repos-cache-time');
     const now = Date.now();
     
-    // Use cache if it's less than 10 minutes old
-    if (cachedData && cacheTime && (now - parseInt(cacheTime)) < 600000) {
+    // Temporarily disable cache to debug API issues
+    console.log('Cache check - cachedData exists:', !!cachedData);
+    console.log('Cache check - cacheTime:', cacheTime);
+    console.log('Cache check - time difference:', cacheTime ? (now - parseInt(cacheTime)) : 'N/A');
+    
+    // Use cache if it's less than 10 minutes old (temporarily disabled for debugging)
+    if (false && cachedData && cacheTime && (now - parseInt(cacheTime)) < 600000) {
       try {
         const reposData = JSON.parse(cachedData);
         const originalRepos = reposData.filter(repo => !repo.fork);
@@ -30,6 +35,7 @@ const RepositoriesSection = () => {
         setRepositories(originalRepos);
         setContributions(forks);
         setLoading(false);
+        console.log('Using cached data');
         return;
       } catch (cacheError) {
         console.warn('Failed to parse cached data:', cacheError);
@@ -67,6 +73,7 @@ const RepositoriesSection = () => {
     
     // Try to fetch from GitHub API
     try {
+      console.log('Fetching repositories from GitHub API...');
       const reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=50', {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
@@ -74,8 +81,13 @@ const RepositoriesSection = () => {
         }
       });
       
+      console.log('GitHub API response status:', reposResponse.status);
+      console.log('GitHub API response headers:', reposResponse.headers);
+      
       if (reposResponse.ok) {
         const reposData = await reposResponse.json();
+        console.log('Successfully fetched repositories:', reposData.length);
+        console.log('Repository data:', reposData);
         
         // Cache the data
         localStorage.setItem('github-repos-cache', JSON.stringify(reposData));
@@ -83,16 +95,25 @@ const RepositoriesSection = () => {
         
         // Filter out forks and get only original repositories
         const originalRepos = reposData.filter(repo => !repo.fork);
+        console.log('Original repositories (non-forks):', originalRepos.length);
         setRepositories(originalRepos);
 
         // For contributions, we'll fetch repositories where the user has contributed
         const forks = reposData.filter(repo => repo.fork);
+        console.log('Forked repositories:', forks.length);
         setContributions(forks);
       } else {
-        throw new Error(`GitHub API error: ${reposResponse.status}`);
+        const errorText = await reposResponse.text();
+        console.error('GitHub API error response:', errorText);
+        throw new Error(`GitHub API error: ${reposResponse.status} - ${errorText}`);
       }
     } catch (apiError) {
-      console.warn('GitHub API failed, using fallback data:', apiError.message);
+      console.error('GitHub API failed, using fallback data:', apiError);
+      console.error('Error details:', {
+        message: apiError.message,
+        stack: apiError.stack,
+        name: apiError.name
+      });
       
       // Use fallback data
       setRepositories(fallbackRepos);
