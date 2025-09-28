@@ -5,10 +5,9 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem;
-  background: 
-    linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: visible;
@@ -24,17 +23,16 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
 }
 
 .mini-language-chart:hover {
-  background: 
-    linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
-  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
   box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 12px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .chart-container {
@@ -50,7 +48,7 @@
 .language-label {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #60a5fa;
+  color: #d1d5db;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -122,16 +120,26 @@
   }
   
   .tooltip-content {
-    min-width: 180px;
-    padding: 10px;
+    min-width: 160px;
+    padding: 8px;
   }
   
   .tooltip-title {
-    font-size: 12px;
+    font-size: 11px;
   }
   
   .tooltip-body {
-    font-size: 11px;
+    font-size: 10px;
+  }
+  
+  /* On very small screens, position tooltip above instead of to the side */
+  .custom-tooltip {
+    left: 50% !important;
+    top: auto !important;
+    bottom: 100% !important;
+    margin-left: 0 !important;
+    margin-bottom: 8px !important;
+    transform: translateX(-50%) !important;
   }
 }
 
@@ -205,6 +213,22 @@
 /* Custom tooltip styles */
 .custom-tooltip {
   /* Custom tooltip positioning handled by JavaScript */
+  max-width: 250px;
+  min-width: 180px;
+}
+
+.custom-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid rgba(255, 255, 255, 0.1);
+  z-index: 1;
 }
 
 .tooltip-content {
@@ -248,7 +272,7 @@
 }
 
 .tooltip-percentage {
-  color: #60a5fa;
+  color: #8b5cf6;
   font-weight: 600;
   font-size: 11px;
 }
@@ -266,5 +290,5 @@
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 600;
-  color: #60a5fa;
+  color: #8b5cf6;
 }

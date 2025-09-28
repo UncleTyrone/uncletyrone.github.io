@@ -54,6 +54,7 @@ const RepositoriesSection = () => {
         language: "JavaScript",
         stargazers_count: 0,
         forks_count: 0,
+        subscribers_count: 0,
         fork: false,
         updated_at: new Date().toISOString()
       },
@@ -66,6 +67,7 @@ const RepositoriesSection = () => {
         language: null,
         stargazers_count: 0,
         forks_count: 0,
+        subscribers_count: 0,
         fork: false,
         updated_at: new Date().toISOString()
       }
@@ -96,12 +98,61 @@ const RepositoriesSection = () => {
         // Filter out forks and get only original repositories
         const originalRepos = reposData.filter(repo => !repo.fork);
         console.log('Original repositories (non-forks):', originalRepos.length);
-        setRepositories(originalRepos);
+        
+        // Fetch subscribers count for each repository with rate limiting
+        const reposWithSubscribers = [];
+        for (let i = 0; i < originalRepos.length; i++) {
+          const repo = originalRepos[i];
+          try {
+            // Add delay between requests to avoid rate limiting
+            if (i > 0) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}/subscribers`, {
+              headers: {
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'UncleTyrone-Portfolio'
+              }
+            });
+            
+            if (subscribersResponse.ok) {
+              const subscribersData = await subscribersResponse.json();
+              reposWithSubscribers.push({
+                ...repo,
+                subscribers_count: subscribersData.length
+              });
+            } else if (subscribersResponse.status === 403) {
+              console.warn('GitHub API rate limit exceeded, using fallback data');
+              reposWithSubscribers.push({
+                ...repo,
+                subscribers_count: 0
+              });
+            } else {
+              console.warn(`Failed to fetch subscribers for ${repo.full_name}:`, subscribersResponse.status);
+              reposWithSubscribers.push({
+                ...repo,
+                subscribers_count: 0
+              });
+            }
+          } catch (error) {
+            console.error(`Error fetching subscribers for ${repo.full_name}:`, error);
+            reposWithSubscribers.push({
+              ...repo,
+              subscribers_count: 0
+            });
+          }
+        }
+        
+        setRepositories(reposWithSubscribers);
 
         // For contributions, we'll fetch repositories where the user has contributed
         const forks = reposData.filter(repo => repo.fork);
         console.log('Forked repositories:', forks.length);
         setContributions(forks);
+      } else if (reposResponse.status === 403) {
+        console.error('GitHub API rate limit exceeded');
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
       } else {
         const errorText = await reposResponse.text();
         console.error('GitHub API error response:', errorText);
@@ -167,18 +218,22 @@ const RepositoriesSection = () => {
 
   if (loading) {
     return (
-      <section className="repositories-section">
-        <h2 className="section-title">Loading...</h2>
-      </section>
+      <div className="repositories-container">
+        <section className="repositories-section">
+          <h2 className="section-title">Loading...</h2>
+        </section>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <section className="repositories-section">
-        <h2 className="section-title">Error loading repositories</h2>
-        <p style={{ color: '#b3b3b3', textAlign: 'center' }}>{error}</p>
-      </section>
+      <div className="repositories-container">
+        <section className="repositories-section">
+          <h2 className="section-title">Error loading repositories</h2>
+          <p style={{ color: '#b3b3b3', textAlign: 'center' }}>{error}</p>
+        </section>
+      </div>
     );
   }
 
@@ -186,50 +241,52 @@ const RepositoriesSection = () => {
   const tabTitle = activeTab === 'repositories' ? 'Repositories' : 'Contributions';
 
   return (
-    <section className="repositories-section">
-      <h2 className="section-title">{tabTitle}</h2>
-      
-      <div className="toggle-container">
-        <div className="toggle-slider">
-          <button
-            className={`toggle-option ${activeTab === 'repositories' ? 'active' : ''}`}
-            onClick={() => setActiveTab('repositories')}
-          >
-            Repositories
-          </button>
-          <button
-            className={`toggle-option ${activeTab === 'contributions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('contributions')}
-          >
-            Contributions
-          </button>
-        </div>
-      </div>
-
-
-      <div className="repositories-grid">
-        {currentData.length === 0 ? (
-          <div style={{ 
-            gridColumn: '1 / -1', 
-            textAlign: 'center', 
-            color: '#b3b3b3',
-            padding: '2rem'
-          }}>
-            No {activeTab} found.
+    <div className="repositories-container">
+      <section className="repositories-section">
+        <h2 className="section-title">{tabTitle}</h2>
+        
+        <div className="toggle-container">
+          <div className="toggle-slider">
+            <button
+              className={`toggle-option ${activeTab === 'repositories' ? 'active' : ''}`}
+              onClick={() => setActiveTab('repositories')}
+            >
+              Repositories
+            </button>
+            <button
+              className={`toggle-option ${activeTab === 'contributions' ? 'active' : ''}`}
+              onClick={() => setActiveTab('contributions')}
+            >
+              Contributions
+            </button>
           </div>
-        ) : (
-          currentData.map((repo) => (
-            <RepositoryCard
-              key={repo.id}
-              repository={repo}
-              formatLanguage={formatLanguage}
-              getLanguageColor={getLanguageColor}
-              getRepositoryLanguages={getRepositoryLanguages}
-            />
-          ))
-        )}
-      </div>
-    </section>
+        </div>
+
+
+        <div className="repositories-grid">
+          {currentData.length === 0 ? (
+            <div style={{ 
+              gridColumn: '1 / -1', 
+              textAlign: 'center', 
+              color: '#b3b3b3',
+              padding: '2rem'
+            }}>
+              No {activeTab} found.
+            </div>
+          ) : (
+            currentData.map((repo) => (
+              <RepositoryCard
+                key={repo.id}
+                repository={repo}
+                formatLanguage={formatLanguage}
+                getLanguageColor={getLanguageColor}
+                getRepositoryLanguages={getRepositoryLanguages}
+              />
+            ))
+          )}
+        </div>
+      </section>
+    </div>
   );
 };
 

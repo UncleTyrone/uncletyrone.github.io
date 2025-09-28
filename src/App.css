@@ -184,6 +184,40 @@ body {
   padding: 2rem 1rem;
 }
 
+/* Full-width background container for repositories */
+.repositories-container {
+  width: 100%;
+  background: 
+    linear-gradient(135deg, rgba(30, 30, 50, 0.15) 0%, rgba(20, 20, 35, 0.1) 100%),
+    radial-gradient(circle at 50% 50%, rgba(40, 40, 60, 0.08) 0%, transparent 70%);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 4rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.repositories-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.repositories-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
 
 
 @keyframes smokeFloat {
@@ -402,7 +436,7 @@ body {
   width: 80%;
   height: 2px;
   background: 
-    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.3) 80%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.3) 20%, rgba(139, 92, 246, 0.6) 50%, rgba(139, 92, 246, 0.3) 80%, transparent 100%);
   margin: 1rem auto 1.5rem auto;
   border-radius: 1px;
   position: relative;
@@ -424,7 +458,7 @@ body {
 
 .repository-description {
   color: #cbd5e1;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   line-height: 1.6;
   font-size: 0.95rem;
   position: relative;
@@ -896,9 +930,7 @@ body {
 }
 
 .modal-content {
-  background: 
-    linear-gradient(135deg, rgba(30, 30, 50, 0.95) 0%, rgba(20, 20, 35, 0.9) 100%),
-    radial-gradient(circle at 50% 0%, rgba(40, 40, 60, 0.3) 0%, transparent 70%);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 24px;
   padding: 2rem 2rem 1.5rem 2rem;
   text-align: center;
@@ -939,7 +971,7 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(96, 165, 250, 0.6) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.6) 50%, transparent 100%);
   border-radius: 1px;
 }
 
@@ -952,9 +984,9 @@ body {
 
 .modal-start-btn {
   background: 
-    linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(59, 130, 246, 0.15) 100%);
+    linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.15) 100%);
   color: #ffffff;
-  border: 2px solid rgba(96, 165, 250, 0.3);
+  border: 2px solid rgba(139, 92, 246, 0.3);
   padding: 16px 32px;
   border-radius: 16px;
   font-weight: 600;
@@ -967,7 +999,7 @@ body {
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
   box-shadow: 
-    0 8px 25px rgba(59, 130, 246, 0.2),
+    0 8px 25px rgba(139, 92, 246, 0.2),
     0 4px 12px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   -webkit-backdrop-filter: blur(10px);
@@ -976,11 +1008,11 @@ body {
 
 .modal-start-btn:hover {
   background: 
-    linear-gradient(135deg, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.25) 100%);
-  border-color: rgba(96, 165, 250, 0.5);
+    linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(124, 58, 237, 0.25) 100%);
+  border-color: rgba(139, 92, 246, 0.5);
   transform: translateY(-2px) scale(1.02);
   box-shadow: 
-    0 12px 35px rgba(59, 130, 246, 0.3),
+    0 12px 35px rgba(139, 92, 246, 0.3),
     0 8px 20px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }

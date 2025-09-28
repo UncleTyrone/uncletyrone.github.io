@@ -107,10 +107,9 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
     },
     cutout: '60%', // Make it a donut chart for cleaner look
     onHover: (event, elements) => {
+      // Keep this for chart hover, but we'll also handle container hover
       if (elements.length > 0) {
         setShowTooltip(true);
-      } else {
-        setShowTooltip(false);
       }
     },
   };
@@ -130,10 +129,53 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
     <>
       <div 
         className="mini-language-chart"
+        onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <div className="chart-container">
           <Pie ref={chartRef} data={chartData} options={options} />
+          {/* Custom tooltip positioned relative to the chart container */}
+          {showTooltip && (
+            <div 
+              className="custom-tooltip"
+              style={{
+                position: 'absolute',
+                left: '100%',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                marginLeft: '12px',
+                zIndex: 99999,
+                pointerEvents: 'none'
+              }}
+            >
+              <div className="tooltip-content">
+                <div className="tooltip-title">{repository.name}</div>
+                <div className="tooltip-body">
+                  {languages.map((lang, index) => {
+                    const totalBytes = Object.values(languageData).reduce((sum, bytes) => sum + bytes, 0);
+                    const bytes = languageData[lang] || 0;
+                    const percentage = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0;
+                    
+                    return (
+                      <div key={index} className="tooltip-language">
+                        <span 
+                          className="tooltip-color" 
+                          style={{ backgroundColor: getLanguageColor(lang) }}
+                        ></span>
+                        <span className="tooltip-language-name">{lang}</span>
+                        <span className="tooltip-percentage">{percentage}%</span>
+                      </div>
+                    );
+                  })}
+                  {languages.length > 1 && (
+                    <div className="tooltip-total">
+                      Total Languages: {languages.length}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="language-label" title={languages.length > 1 ? `${languages.join(', ')}` : languages[0]}>
           {languages.length > 1 
@@ -152,48 +194,6 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
           }
         </div>
       </div>
-      
-      {/* Custom tooltip that appears outside container */}
-      {showTooltip && (
-        <div 
-          className="custom-tooltip"
-          style={{
-            position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translateX(-50%) translateY(-100%)',
-            zIndex: 99999,
-            pointerEvents: 'none'
-          }}
-        >
-          <div className="tooltip-content">
-            <div className="tooltip-title">{repository.name}</div>
-            <div className="tooltip-body">
-              {languages.map((lang, index) => {
-                const totalBytes = Object.values(languageData).reduce((sum, bytes) => sum + bytes, 0);
-                const bytes = languageData[lang] || 0;
-                const percentage = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0;
-                
-                return (
-                  <div key={index} className="tooltip-language">
-                    <span 
-                      className="tooltip-color" 
-                      style={{ backgroundColor: getLanguageColor(lang) }}
-                    ></span>
-                    <span className="tooltip-language-name">{lang}</span>
-                    <span className="tooltip-percentage">{percentage}%</span>
-                  </div>
-                );
-              })}
-              {languages.length > 1 && (
-                <div className="tooltip-total">
-                  Total Languages: {languages.length}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
