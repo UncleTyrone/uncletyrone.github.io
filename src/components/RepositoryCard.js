@@ -1,5 +1,7 @@
 import React from 'react';
 import BuildWidget from './BuildWidget';
+import MiniLanguageChart from './MiniLanguageChart';
+import './MiniLanguageChart.css';
 
 const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepositoryLanguages }) => {
   const languages = getRepositoryLanguages(repository);
@@ -25,31 +27,38 @@ const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepos
       <div className="repository-languages">
         <div style={{ 
           display: 'flex', 
-          gap: '0.5rem', 
+          gap: '0.75rem', 
           flexWrap: 'wrap',
-          alignItems: 'center'
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          minHeight: '75px'
         }}>
-          {languages.length > 0 && languages.map((language, index) => (
-            <span
-              key={index}
-              className="language-tag"
-              style={{ 
-                backgroundColor: `${getLanguageColor(language)}20`,
-                color: getLanguageColor(language),
-                border: `1px solid ${getLanguageColor(language)}40`
-              }}
-            >
-              {formatLanguage(language)}
-            </span>
-          ))}
+          {/* Mini Language Chart */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '0.5rem', 
+            alignItems: 'flex-start',
+            flexWrap: 'wrap'
+          }}>
+            {languages.length > 0 && languages.map((language, index) => (
+              <MiniLanguageChart
+                key={index}
+                repository={repository}
+                getLanguageColor={getLanguageColor}
+              />
+            ))}
+          </div>
           
+          {/* Stats */}
           {(repository.stargazers_count > 0 || repository.forks_count > 0) && (
             <div style={{ 
               display: 'flex', 
               gap: '0.75rem', 
               fontSize: '0.8rem', 
               color: '#b3b3b3',
-              alignItems: 'center'
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              marginTop: '0.5rem'
             }}>
               {repository.stargazers_count > 0 && (
                 <span>⭐ {repository.stargazers_count}</span>

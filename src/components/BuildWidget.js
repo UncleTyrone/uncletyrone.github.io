@@ -33,9 +33,9 @@ const BuildWidget = ({ repository }) => {
       if (tagsResponse.ok) {
         const tagsData = await tagsResponse.json();
         const nightlyTag = tagsData.find(tag => 
-          tag.name.toLowerCase().includes('nightly') || 
-          tag.name.toLowerCase().includes('dev') ||
-          tag.name.toLowerCase().includes('beta')
+          (tag.name.toLowerCase().includes('nightly') || 
+           tag.name.toLowerCase().includes('dev')) &&
+          !tag.name.toLowerCase().includes('beta') // Don't show beta tags as nightly if we already have a release
         );
         if (nightlyTag && nightlyTag.name) {
           setLatestNightly(nightlyTag);
@@ -180,7 +180,7 @@ const BuildWidget = ({ repository }) => {
                     {getBuildType(latestRelease).charAt(0).toUpperCase() + getBuildType(latestRelease).slice(1)}
                   </span>
                   <span className="build-version" title={latestRelease.tag_name}>
-                    {latestRelease.tag_name}
+                    {latestRelease.tag_name.replace(/^(beta|alpha|dev|nightly)-/i, '')}
                   </span>
                 </div>
                 <div 
@@ -218,7 +218,7 @@ const BuildWidget = ({ repository }) => {
             </div>
           )}
 
-          {latestNightly && (
+          {latestNightly && latestNightly.name !== latestRelease?.tag_name && (
             <div className="build-item">
               <div className="build-item-header">
                 <div className="build-type-with-version">
@@ -229,7 +229,7 @@ const BuildWidget = ({ repository }) => {
                     {getBuildType(latestNightly).charAt(0).toUpperCase() + getBuildType(latestNightly).slice(1)}
                   </span>
                   <span className="build-version" title={latestNightly.name}>
-                    {latestNightly.name}
+                    {latestNightly.name.replace(/^(beta|alpha|dev|nightly)-/i, '')}
                   </span>
                 </div>
                 <div 

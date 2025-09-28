@@ -1,0 +1,270 @@
+/* Mini Language Chart Styles */
+.mini-language-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: 
+    linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  width: 70px;
+  height: 85px;
+  flex-shrink: 0;
+}
+
+.mini-language-chart::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+}
+
+.mini-language-chart:hover {
+  background: 
+    linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: rgba(96, 165, 250, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.chart-container {
+  width: 45px;
+  height: 45px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.language-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #60a5fa;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
+  width: 100%;
+  word-break: break-all;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mini-language-chart {
+    width: 55px;
+    height: 70px;
+    padding: 0.4rem;
+  }
+  
+  .chart-container {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .language-label {
+    font-size: 0.55rem;
+    max-width: 45px;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .mini-language-chart {
+    width: 50px;
+    height: 65px;
+    padding: 0.3rem;
+  }
+  
+  .chart-container {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .language-label {
+    font-size: 0.5rem;
+    max-width: 40px;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .mini-language-chart {
+    width: 45px;
+    height: 60px;
+    padding: 0.25rem;
+  }
+  
+  .chart-container {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .language-label {
+    font-size: 0.45rem;
+    max-width: 35px;
+    line-height: 1;
+  }
+  
+  .tooltip-content {
+    min-width: 180px;
+    padding: 10px;
+  }
+  
+  .tooltip-title {
+    font-size: 12px;
+  }
+  
+  .tooltip-body {
+    font-size: 11px;
+  }
+}
+
+/* Loading state */
+.mini-language-chart.loading {
+  opacity: 0.7;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  border-top: 2px solid #60a5fa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Chart.js custom styles for mini charts */
+.mini-language-chart .chartjs-render-monitor {
+  border-radius: 8px;
+}
+
+/* Ensure chart fits properly in container */
+.mini-language-chart canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Tooltip positioning fixes */
+.mini-language-chart {
+  position: relative;
+  z-index: 10;
+  overflow: visible !important;
+}
+
+/* Ensure tooltips appear above other elements */
+.chartjs-tooltip {
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  position: fixed !important;
+  transform: translateY(-100%) !important;
+  margin-top: -10px !important;
+}
+
+/* Override any parent container overflow */
+.repository-card {
+  overflow: visible !important;
+}
+
+.repository-languages {
+  overflow: visible !important;
+}
+
+/* Ensure tooltip container doesn't clip */
+.mini-language-chart .chart-container {
+  overflow: visible !important;
+}
+
+/* Force tooltip to appear outside container */
+.mini-language-chart:hover .chartjs-tooltip {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+/* Custom tooltip styles */
+.custom-tooltip {
+  /* Custom tooltip positioning handled by JavaScript */
+}
+
+.tooltip-content {
+  background: 
+    linear-gradient(135deg, rgba(30, 30, 50, 0.3) 0%, rgba(20, 20, 35, 0.2) 100%),
+    radial-gradient(circle at 50% 0%, rgba(40, 40, 60, 0.15) 0%, transparent 70%);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  min-width: 200px;
+}
+
+.tooltip-title {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.tooltip-body {
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.tooltip-language {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  justify-content: space-between;
+}
+
+.tooltip-language-name {
+  flex: 1;
+  color: #ffffff;
+}
+
+.tooltip-percentage {
+  color: #60a5fa;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.tooltip-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.tooltip-total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  color: #60a5fa;
+}
