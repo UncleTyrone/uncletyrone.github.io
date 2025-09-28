@@ -260,12 +260,9 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
                 const primaryLang = languages[0];
                 if (!primaryLang) return 'Other';
                 
-                const totalBytes = Object.values(languageData).reduce((sum, bytes) => sum + bytes, 0);
-                const bytes = languageData[primaryLang] || 0;
-                const percentage = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 100;
-                
+                // For single languages, just show the language name (truncated if too long)
                 const displayName = primaryLang.length > 6 ? primaryLang.substring(0, 6) + '...' : primaryLang;
-                return `${displayName} ${percentage}%`;
+                return displayName;
               })()
           }
         </div>
