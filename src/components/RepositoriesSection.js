@@ -16,18 +16,15 @@ const RepositoriesSection = () => {
     setLoading(true);
     setError(null);
     
+    // Note: Caching is enabled to reduce API calls and improve performance
+    
     // Try to get cached data first
     const cachedData = localStorage.getItem('github-repos-cache');
     const cacheTime = localStorage.getItem('github-repos-cache-time');
     const now = Date.now();
     
-    // Temporarily disable cache to debug API issues
-    console.log('Cache check - cachedData exists:', !!cachedData);
-    console.log('Cache check - cacheTime:', cacheTime);
-    console.log('Cache check - time difference:', cacheTime ? (now - parseInt(cacheTime)) : 'N/A');
-    
-    // Use cache if it's less than 10 minutes old (temporarily disabled for debugging)
-    if (false && cachedData && cacheTime && (now - parseInt(cacheTime)) < 600000) {
+    // Check cache validity (30 minutes cache)
+    if (cachedData && cacheTime && (now - parseInt(cacheTime)) < 1800000) {
       try {
         const reposData = JSON.parse(cachedData);
         const originalRepos = reposData.filter(repo => !repo.fork);
@@ -43,22 +40,6 @@ const RepositoriesSection = () => {
       }
     }
     
-    // Fallback repository data in case API fails
-    const fallbackRepos = [
-      {
-        id: 1,
-        name: "uncletyrone.github.io",
-        full_name: "UncleTyrone/uncletyrone.github.io",
-        description: "Personal portfolio website showcasing projects and skills",
-        html_url: "https://github.com/UncleTyrone/uncletyrone.github.io",
-        language: "JavaScript",
-        stargazers_count: 0,
-        forks_count: 0,
-        subscribers_count: 0,
-        fork: false,
-        updated_at: new Date().toISOString()
-      }
-    ];
     
     // Try to fetch from GitHub API
     try {
@@ -86,50 +67,11 @@ const RepositoriesSection = () => {
         const originalRepos = reposData.filter(repo => !repo.fork);
         console.log('Original repositories (non-forks):', originalRepos.length);
         
-        // Fetch subscribers count for each repository with rate limiting
-        const reposWithSubscribers = [];
-        for (let i = 0; i < originalRepos.length; i++) {
-          const repo = originalRepos[i];
-          try {
-            // Add delay between requests to avoid rate limiting
-            if (i > 0) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}/subscribers`, {
-              headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'UncleTyrone-Portfolio'
-              }
-            });
-            
-            if (subscribersResponse.ok) {
-              const subscribersData = await subscribersResponse.json();
-              reposWithSubscribers.push({
-                ...repo,
-                subscribers_count: subscribersData.length
-              });
-            } else if (subscribersResponse.status === 403) {
-              console.warn('GitHub API rate limit exceeded, using fallback data');
-              reposWithSubscribers.push({
-                ...repo,
-                subscribers_count: 0
-              });
-            } else {
-              console.warn(`Failed to fetch subscribers for ${repo.full_name}:`, subscribersResponse.status);
-              reposWithSubscribers.push({
-                ...repo,
-                subscribers_count: 0
-              });
-            }
-          } catch (error) {
-            console.error(`Error fetching subscribers for ${repo.full_name}:`, error);
-            reposWithSubscribers.push({
-              ...repo,
-              subscribers_count: 0
-            });
-          }
-        }
+        // Use repositories without fetching subscribers (to avoid rate limiting)
+        const reposWithSubscribers = originalRepos.map(repo => ({
+          ...repo,
+          subscribers_count: 0 // Set to 0 to avoid additional API calls
+        }));
         
         setRepositories(reposWithSubscribers);
 
@@ -153,7 +95,23 @@ const RepositoriesSection = () => {
         name: apiError.name
       });
       
-      // Use fallback data
+      // Use fallback data with just the portfolio repository
+      const fallbackRepos = [
+        {
+          id: 1,
+          name: "uncletyrone.github.io",
+          full_name: "UncleTyrone/uncletyrone.github.io",
+          description: "Personal portfolio website showcasing projects and skills",
+          html_url: "https://github.com/UncleTyrone/uncletyrone.github.io",
+          language: "JavaScript",
+          stargazers_count: 0,
+          forks_count: 0,
+          subscribers_count: 0,
+          fork: false,
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
       setRepositories(fallbackRepos);
       setContributions([]);
       

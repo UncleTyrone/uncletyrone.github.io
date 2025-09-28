@@ -2,52 +2,117 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './BuildWidget.css';
 
 const BuildWidget = ({ repository }) => {
+  console.log('BuildWidget rendered with repository:', repository?.name, repository?.full_name);
   const [latestRelease, setLatestRelease] = useState(null);
   const [latestNightly, setLatestNightly] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  // Add global function to clear build cache (for debugging)
+  useEffect(() => {
+    window.clearBuildCache = () => {
+      const keys = Object.keys(localStorage);
+      const buildKeys = keys.filter(key => key.startsWith('build-data-') || key.includes('build-data'));
+      buildKeys.forEach(key => localStorage.removeItem(key));
+      console.log('Build cache cleared! Refreshing page...');
+      window.location.reload();
+    };
+  }, []);
 
   const fetchBuildData = useCallback(async () => {
+    console.log('BuildWidget fetchBuildData called with repository:', repository);
     if (!repository || !repository.full_name) {
+      console.log('No repository or full_name, skipping fetch');
       setLoading(false);
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch latest release
-      const releaseResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/releases/latest`);
-      if (releaseResponse.ok) {
-        const releaseData = await releaseResponse.json();
-        // Only set if we have valid data
-        if (releaseData && releaseData.tag_name) {
-          setLatestRelease(releaseData);
+    // Check cache first
+    const cacheKey = `build-data-${repository.full_name}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTime = localStorage.getItem(`${cacheKey}-time`);
+    const now = Date.now();
+    
+    if (cachedData && cacheTime && (now - parseInt(cacheTime)) < 3600000) { // 1 hour cache
+      try {
+        const data = JSON.parse(cachedData);
+        console.log('Using cached build data:', data);
+        
+        // If cached data is null (old fallback), clear cache and fetch fresh
+        if (data.latestRelease === null && data.latestNightly === null) {
+          console.log('Detected old null cache data, clearing and fetching fresh...');
+          localStorage.removeItem(cacheKey);
+          localStorage.removeItem(`${cacheKey}-time`);
+        } else {
+          setLatestRelease(data.latestRelease);
+          setLatestNightly(data.latestNightly);
+          setLoading(false);
+          return;
         }
+      } catch (cacheError) {
+        console.warn('Failed to parse cached build data:', cacheError);
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(`${cacheKey}-time`);
       }
-
-      // For nightly builds, we'll look for tags with "nightly" or "dev" in the name
-      // This is a simplified approach - you might need to adjust based on your tagging strategy
-      const tagsResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/tags?per_page=10`);
-      if (tagsResponse.ok) {
-        const tagsData = await tagsResponse.json();
-        const nightlyTag = tagsData.find(tag => 
-          (tag.name.toLowerCase().includes('nightly') || 
-           tag.name.toLowerCase().includes('dev')) &&
-          !tag.name.toLowerCase().includes('beta') // Don't show beta tags as nightly if we already have a release
-        );
-        if (nightlyTag && nightlyTag.name) {
-          setLatestNightly(nightlyTag);
-        }
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.warn(`Failed to fetch build data for ${repository.full_name}:`, err.message);
-      setError(null); // Don't show error for individual repos
-      setLoading(false);
     }
+
+    // Fetch release data from GitHub API
+    try {
+      console.log('Fetching release data for:', repository.full_name);
+      
+      const releasesResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/releases?per_page=5`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'UncleTyrone-Portfolio'
+        }
+      });
+      
+      if (releasesResponse.ok) {
+        const releases = await releasesResponse.json();
+        console.log('Found releases:', releases.length);
+        
+        // Find latest release and nightly/dev builds
+        const latestRelease = releases.find(release => 
+          !release.tag_name.toLowerCase().includes('alpha') &&
+          !release.tag_name.toLowerCase().includes('beta') &&
+          !release.tag_name.toLowerCase().includes('dev') &&
+          !release.tag_name.toLowerCase().includes('nightly')
+        ) || releases[0] || null;
+        
+        const latestNightly = releases.find(release => 
+          release.tag_name.toLowerCase().includes('alpha') ||
+          release.tag_name.toLowerCase().includes('beta') ||
+          release.tag_name.toLowerCase().includes('dev') ||
+          release.tag_name.toLowerCase().includes('nightly')
+        ) || null;
+        
+        setLatestRelease(latestRelease);
+        setLatestNightly(latestNightly);
+        
+        // Cache the data
+        localStorage.setItem(cacheKey, JSON.stringify({ 
+          latestRelease, 
+          latestNightly 
+        }));
+        localStorage.setItem(`${cacheKey}-time`, now.toString());
+        
+        console.log('Release data cached successfully');
+      } else if (releasesResponse.status === 403) {
+        console.warn('GitHub API rate limit exceeded. Using cached data or showing fallback.');
+        // Don't cache rate limit errors, but also don't fail completely
+        setLatestRelease(null);
+        setLatestNightly(null);
+      } else {
+        console.warn('Failed to fetch releases:', releasesResponse.status);
+        setLatestRelease(null);
+        setLatestNightly(null);
+      }
+    } catch (apiError) {
+      console.error('Error fetching releases:', apiError);
+      setLatestRelease(null);
+      setLatestNightly(null);
+    }
+
+    setLoading(false);
   }, [repository]);
 
   useEffect(() => {
@@ -149,18 +214,6 @@ const BuildWidget = ({ repository }) => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="build-widget">
-        <div className="build-widget-header">
-          <h4>Build Status</h4>
-        </div>
-        <div className="build-widget-content">
-          <div className="build-error">Failed to load builds</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="build-widget">
@@ -277,3 +330,4 @@ const BuildWidget = ({ repository }) => {
 };
 
 export default BuildWidget;
+
