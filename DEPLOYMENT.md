@@ -4,14 +4,14 @@
 
 ### Step 1: Create GitHub Repository
 1. Go to [GitHub](https://github.com) and create a new repository
-2. Name it: `uncletyrone-portfolio`
+2. Name it: `uncletyrone.github.io`
 3. Make it public
 4. Don't initialize with README (we already have one)
 
 ### Step 2: Connect Local Repository
 ```bash
 # In your project directory
-git remote add origin https://github.com/UncleTyrone/uncletyrone-portfolio.git
+git remote add origin https://github.com/UncleTyrone/uncletyrone.github.io.git
 git branch -M main
 git add .
 git commit -m "Initial portfolio setup"
@@ -31,7 +31,7 @@ npm run deploy
 5. Select "gh-pages" branch and "/ (root)" folder
 6. Click "Save"
 
-Your website will be live at: `https://uncletyrone.github.io/uncletyrone-portfolio`
+Your website will be live at: `https://uncletyrone.github.io/`
 
 ## Adding Media Files Before Deploy
 

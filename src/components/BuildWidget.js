@@ -139,52 +139,79 @@ const BuildWidget = ({ repository }) => {
           {latestRelease && (
             <div className="build-item">
               <div className="build-item-header">
-                <div className="build-type-container">
-                  <div className="build-type-with-version">
-                    <span 
-                      className="build-type"
-                      style={{ color: getBuildTypeColor(getBuildType(latestRelease)) }}
-                    >
-                      {getBuildType(latestRelease).charAt(0).toUpperCase() + getBuildType(latestRelease).slice(1)}
-                    </span>
-                    <span className="build-version">{latestRelease.tag_name}</span>
-                  </div>
+                <div className="build-type-with-version">
+                  <span 
+                    className="build-type"
+                    style={{ color: getBuildTypeColor(getBuildType(latestRelease)) }}
+                  >
+                    {getBuildType(latestRelease).charAt(0).toUpperCase() + getBuildType(latestRelease).slice(1)}
+                  </span>
+                  <span className="build-version">{latestRelease.tag_name}</span>
                 </div>
-                <span 
-                  className="build-status"
+                <div 
+                  className="build-date"
                   style={{ backgroundColor: getStatusColor(getBuildStatus(latestRelease)) }}
                 >
                   {formatDate(latestRelease.published_at)}
-                </span>
+                </div>
               </div>
-              {latestRelease.assets && latestRelease.assets.length > 0 && (
-                <div className="build-downloads">
-                  📥 {latestRelease.assets.reduce((total, asset) => total + asset.download_count, 0)} downloads
+              
+              {latestRelease.body && (
+                <div className="build-description">
+                  {latestRelease.body.length > 100 
+                    ? latestRelease.body.substring(0, 100) + '...' 
+                    : latestRelease.body
+                  }
                 </div>
               )}
+              
+              <div className="build-actions">
+                <a 
+                  href={latestRelease.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="build-download-btn"
+                >
+                  Download
+                </a>
+                {latestRelease.assets && latestRelease.assets.length > 0 && (
+                  <div className="build-downloads">
+                    📥 {latestRelease.assets.reduce((total, asset) => total + asset.download_count, 0)} downloads
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {latestNightly && (
             <div className="build-item">
               <div className="build-item-header">
-                <div className="build-type-container">
-                  <div className="build-type-with-version">
-                    <span 
-                      className="build-type"
-                      style={{ color: getBuildTypeColor(getBuildType(latestNightly)) }}
-                    >
-                      {getBuildType(latestNightly).charAt(0).toUpperCase() + getBuildType(latestNightly).slice(1)}
-                    </span>
-                    <span className="build-version">{latestNightly.name}</span>
-                  </div>
+                <div className="build-type-with-version">
+                  <span 
+                    className="build-type"
+                    style={{ color: getBuildTypeColor(getBuildType(latestNightly)) }}
+                  >
+                    {getBuildType(latestNightly).charAt(0).toUpperCase() + getBuildType(latestNightly).slice(1)}
+                  </span>
+                  <span className="build-version">{latestNightly.name}</span>
                 </div>
-                <span 
-                  className="build-status"
+                <div 
+                  className="build-date"
                   style={{ backgroundColor: getStatusColor(getBuildStatus(latestNightly)) }}
                 >
                   {formatDate(latestNightly.commit?.commit?.committer?.date)}
-                </span>
+                </div>
+              </div>
+              
+              <div className="build-actions">
+                <a 
+                  href={`https://github.com/${repository.full_name}/releases/tag/${latestNightly.name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="build-download-btn"
+                >
+                  Download
+                </a>
               </div>
             </div>
           )}

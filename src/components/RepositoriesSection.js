@@ -13,53 +13,97 @@ const RepositoriesSection = () => {
   }, []);
 
   const fetchRepositories = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch user's public repositories with retry logic
-      let reposResponse;
-      let retries = 3;
-      
-      while (retries > 0) {
-        reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=100', {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'UncleTyrone-Portfolio'
-          }
-        });
-        
-        if (reposResponse.ok) {
-          break;
-        } else if (reposResponse.status === 403) {
-          // Rate limited, wait and retry
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          retries--;
-        } else {
-          throw new Error(`GitHub API error: ${reposResponse.status} ${reposResponse.statusText}`);
-        }
+    setLoading(true);
+    setError(null);
+    
+    // Try to get cached data first
+    const cachedData = localStorage.getItem('github-repos-cache');
+    const cacheTime = localStorage.getItem('github-repos-cache-time');
+    const now = Date.now();
+    
+    // Use cache if it's less than 10 minutes old
+    if (cachedData && cacheTime && (now - parseInt(cacheTime)) < 600000) {
+      try {
+        const reposData = JSON.parse(cachedData);
+        const originalRepos = reposData.filter(repo => !repo.fork);
+        const forks = reposData.filter(repo => repo.fork);
+        setRepositories(originalRepos);
+        setContributions(forks);
+        setLoading(false);
+        return;
+      } catch (cacheError) {
+        console.warn('Failed to parse cached data:', cacheError);
+        // Continue to fetch fresh data
       }
-      
-      if (!reposResponse.ok) {
-        throw new Error('GitHub API rate limit exceeded. Please try again later.');
-      }
-      
-      const reposData = await reposResponse.json();
-      
-      // Filter out forks and get only original repositories
-      const originalRepos = reposData.filter(repo => !repo.fork);
-      setRepositories(originalRepos);
-
-      // For contributions, we'll fetch repositories where the user has contributed
-      // This is a simplified approach - in reality, getting contribution data is more complex
-      const forks = reposData.filter(repo => repo.fork);
-      setContributions(forks);
-
-      setLoading(false);
-    } catch (err) {
-      console.error('Repository fetch error:', err);
-      setError(`Failed to load repositories: ${err.message}`);
-      setLoading(false);
     }
+    
+    // Fallback repository data in case API fails
+    const fallbackRepos = [
+      {
+        id: 1,
+        name: "uncletyrone.github.io",
+        full_name: "UncleTyrone/uncletyrone.github.io",
+        description: "Personal portfolio website showcasing projects and skills",
+        html_url: "https://github.com/UncleTyrone/uncletyrone.github.io",
+        language: "JavaScript",
+        stargazers_count: 0,
+        forks_count: 0,
+        fork: false,
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 2,
+        name: "uncletyronepics",
+        full_name: "UncleTyrone/uncletyronepics",
+        description: "Collection of images and assets",
+        html_url: "https://github.com/UncleTyrone/uncletyronepics",
+        language: null,
+        stargazers_count: 0,
+        forks_count: 0,
+        fork: false,
+        updated_at: new Date().toISOString()
+      }
+    ];
+    
+    // Try to fetch from GitHub API
+    try {
+      const reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=50', {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'UncleTyrone-Portfolio'
+        }
+      });
+      
+      if (reposResponse.ok) {
+        const reposData = await reposResponse.json();
+        
+        // Cache the data
+        localStorage.setItem('github-repos-cache', JSON.stringify(reposData));
+        localStorage.setItem('github-repos-cache-time', now.toString());
+        
+        // Filter out forks and get only original repositories
+        const originalRepos = reposData.filter(repo => !repo.fork);
+        setRepositories(originalRepos);
+
+        // For contributions, we'll fetch repositories where the user has contributed
+        const forks = reposData.filter(repo => repo.fork);
+        setContributions(forks);
+      } else {
+        throw new Error(`GitHub API error: ${reposResponse.status}`);
+      }
+    } catch (apiError) {
+      console.warn('GitHub API failed, using fallback data:', apiError.message);
+      
+      // Use fallback data
+      setRepositories(fallbackRepos);
+      setContributions([]);
+      
+      // Cache fallback data
+      localStorage.setItem('github-repos-cache', JSON.stringify(fallbackRepos));
+      localStorage.setItem('github-repos-cache-time', now.toString());
+    }
+
+    setLoading(false);
   };
 
   const formatLanguage = (language) => {

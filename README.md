@@ -63,11 +63,11 @@ npm run build
 ### 5. Deploy to GitHub Pages
 
 #### First Time Setup
-1. Create a new repository on GitHub named `uncletyrone-portfolio`
+1. Create a new repository on GitHub named `uncletyrone.github.io`
 2. Push your code to the repository:
 
 ```bash
-git remote add origin https://github.com/UncleTyrone/uncletyrone-portfolio.git
+git remote add origin https://github.com/UncleTyrone/uncletyrone.github.io.git
 git add .
 git commit -m "Initial portfolio setup"
 git push -u origin main
@@ -78,12 +78,12 @@ git push -u origin main
 npm run deploy
 ```
 
-Your website will be live at: `https://uncletyrone.github.io/uncletyrone-portfolio`
+Your website will be live at: `https://uncletyrone.github.io/`
 
 ## Project Structure
 
 ```
-uncletyrone-portfolio/
+uncletyrone.github.io/
 ├── public/
 │   ├── music/           # Add your MP3 files here
 │   ├── background.mp4   # Add your background video here
