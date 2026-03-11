@@ -32,6 +32,6 @@ declare module "@vendetta/storage" {
 }
 
 declare module "prismjs" {
-  const Prism: { highlight: (...args: unknown[]) => string; tokenize: (...args: unknown[]) => unknown[]; languages: Record<string, unknown> };
+  const Prism: { highlight: (...args: unknown[]) => string | unknown[]; languages: Record<string, unknown> };
   export default Prism;
 }
