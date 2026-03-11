@@ -214,65 +214,10 @@ const BetterCode = {
     }
 
     function walkContent(content: unknown[]): [unknown[], unknown[]] {
-      const embeds: unknown[] = [];
-      content = fixCodeblockGap(content).map((obj) => {
-        const o = obj as { type?: string; content?: unknown; lang?: string };
-        if (typeof o.content === "object" && Array.isArray(o.content)) {
-          o.content = walkContent(o.content)[0];
-        }
-        if (o.type === "codeBlock" && o.lang && supportedLangs.includes(o.lang)) {
-          let codeText: string;
-          if (typeof o.content === "string") {
-            codeText = o.content;
-          } else if (Array.isArray(o.content)) {
-            codeText = o.content.map((c: unknown) => typeof c === "string" ? c : (c as { content?: string })?.content ?? "").join("");
-          } else {
-            codeText = String(o.content ?? "");
-          }
-          const meta =
-            langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
-          const iconURL = `${LOGOS_BASE}/${meta}.png`;
-          const rawContent: unknown[] = [
-            {
-              content: highlightText(codeText, o.lang),
-              type: "paragraph",
-            },
-          ];
-
-          const footerLabel =
-            typeof storage.footer_text === "string" && storage.footer_text.trim().length
-              ? storage.footer_text.trim()
-              : "BetterCode";
-
-          if (storage.show_footer !== false) {
-            rawContent.push({ content: `-- ${footerLabel}`, type: "text" });
-          }
-
-          const { border, provider } = getEmbedColors();
-          const processColor = ReactNative?.processColor;
-          const borderColor = typeof processColor === "function" ? processColor(border) : hexToColorInt(border);
-          const providerColorVal = typeof processColor === "function" ? processColor(provider) : hexToColorInt(provider);
-
-          const embed = {
-            type: "rich",
-            description: rawContent,
-            author: {
-              name: langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang,
-              iconURL,
-              iconProxyURL: iconURL,
-            },
-            borderLeftColor: borderColor,
-            providerColor: providerColorVal,
-            headerTextColor: 4294967295,
-            bodyTextColor: 4292599521,
-          };
-          embeds.push(embed);
-          o.type = "text";
-          o.content = "";
-        }
-        return obj;
-      }) as unknown[];
-      return [content, embeds];
+      // Temporary: only apply gap fix, do not create embeds.
+      // This lets us verify that embed shape is the source of render failures.
+      const fixed = fixCodeblockGap(content);
+      return [fixed, []];
     }
 
       // Rain: before(methodName, parent, callback); Vendetta: before(parent, methodName, callback)
