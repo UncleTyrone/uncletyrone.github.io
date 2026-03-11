@@ -223,13 +223,10 @@ const BetterCode = {
           const meta = langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
           const iconURL = `${LOGOS_BASE}/${meta}.png`;
 
+          // Plain-text body for Rain embeds; no rich link nodes.
           const rawContent: unknown[] = [
-            {
-              content: highlightText(codeText, o.lang),
-              type: "paragraph",
-            },
+            { type: "text", content: codeText },
           ];
-
           const footerLabel =
             typeof storage.footer_text === "string" && storage.footer_text.trim().length
               ? storage.footer_text.trim()
