@@ -7,7 +7,14 @@ declare module "@vendetta/patcher" {
   export function instead(...args: unknown[]): () => void;
 }
 declare module "@vendetta/metro" {
-  export function findByProps(...props: string[]): Record<string, unknown> & { NativeModules?: Record<string, unknown> };
+  interface DCDChatManager {
+    updateRows?: (...args: unknown[]) => void;
+  }
+  interface ViewNativeModules {
+    DCDChatManager?: DCDChatManager;
+    [key: string]: unknown;
+  }
+  export function findByProps(...props: string[]): Record<string, unknown> & { NativeModules?: ViewNativeModules };
 }
 declare module "@vendetta/metro/common" {
   export const ReactNative: { processColor?: (color: string) => number };

@@ -103,29 +103,42 @@ const BetterCode = {
         return;
       }
       const { DCDChatManager } = View.NativeModules;
+      if (typeof DCDChatManager?.updateRows !== "function") {
+        console.error("[BetterCode] DCDChatManager.updateRows is not a function");
+        return;
+      }
 
     function highlightText(text: string, lang: string): unknown[] {
-      if (storage.show_line_num) {
-        text = text
-          .split("\n")
-          .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
-          .join("\n");
-      }
-      const grammar = Prism.languages[lang] ?? {};
-      const res = Prism.tokenize(text, grammar) as (string | { type?: string; alias?: string | string[]; content?: unknown })[];
-      const contents: unknown[] = [];
-      for (const part of res) {
+      try {
+        if (storage.show_line_num) {
+          text = text
+            .split("\n")
+            .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
+            .join("\n");
+        }
+        const grammar = Prism.languages[lang] ?? Prism.languages.plain ?? {};
+        if (typeof Prism.tokenize !== "function") {
+          return [{ type: "text" as const, content: text }];
+        }
+        const res = Prism.tokenize(text, grammar) as (string | { type?: string; alias?: string | string[]; content?: unknown })[];
+        if (!Array.isArray(res)) {
+          return [{ type: "text" as const, content: text }];
+        }
+        const contents: unknown[] = [];
+        for (const part of res) {
         if (typeof part === "object" && part !== null && "type" in part) {
           const p = part as { type?: string; alias?: string | string[]; content?: unknown };
           const style = (Array.isArray(p.alias) ? p.alias[0] : p.alias) ?? p.type ?? "";
           if (theme[style]) {
             const color = theme[style];
+            const processColor = ReactNative?.processColor;
+            const linkColor = typeof processColor === "function" ? processColor(color) : color;
             contents.push({
               content: [{ type: "text", content: p.content }],
               target: "usernameOnClick",
               context: {
                 username: 1,
-                usernameOnClick: { linkColor: ReactNative.processColor(color) },
+                usernameOnClick: { linkColor },
                 medium: true,
               },
               type: "link",
@@ -139,7 +152,11 @@ const BetterCode = {
           contents.push({ type: "text", content: part });
         }
       }
-      return contents;
+        return contents;
+      } catch (e) {
+        console.warn("[BetterCode] highlightText failed, using plain:", e);
+        return [{ type: "text" as const, content: text }];
+      }
     }
 
     function fixCodeblockGap(content: unknown[]): unknown[] {
@@ -190,12 +207,20 @@ const BetterCode = {
           o.content = walkContent(o.content)[0];
         }
         if (o.type === "codeBlock" && o.lang && supportedLangs.includes(o.lang)) {
+          let codeText: string;
+          if (typeof o.content === "string") {
+            codeText = o.content;
+          } else if (Array.isArray(o.content)) {
+            codeText = o.content.map((c: unknown) => typeof c === "string" ? c : (c as { content?: string })?.content ?? "").join("");
+          } else {
+            codeText = String(o.content ?? "");
+          }
           const meta =
             langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
           const iconURL = `${LOGOS_BASE}/${meta}.png`;
           const rawContent: unknown[] = [
             {
-              content: highlightText(String(o.content), o.lang),
+              content: highlightText(codeText, o.lang),
               type: "paragraph",
             },
           ];
@@ -210,6 +235,9 @@ const BetterCode = {
           }
 
           const { border, provider } = getEmbedColors();
+          const processColor = ReactNative?.processColor;
+          const borderColor = typeof processColor === "function" ? processColor(border) : border;
+          const providerColorVal = typeof processColor === "function" ? processColor(provider) : provider;
 
           const embed = {
             type: "rich",
@@ -219,8 +247,8 @@ const BetterCode = {
               iconURL,
               iconProxyURL: iconURL,
             },
-            borderLeftColor: ReactNative.processColor(border),
-            providerColor: ReactNative.processColor(provider),
+            borderLeftColor: borderColor,
+            providerColor: providerColorVal,
             headerTextColor: 4294967295,
             bodyTextColor: 4292599521,
           };
