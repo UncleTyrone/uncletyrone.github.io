@@ -271,23 +271,36 @@ const BetterCode = {
         "updateRows",
         DCDChatManager,
         (args: [unknown, string]) => {
-        try {
-          const rows = JSON.parse(args[1]);
-          for (const row of rows) {
-            if (row?.message?.content) {
-              const [newContent, newEmbeds] = walkContent(row.message.content);
-              row.message.content = newContent;
-              if (row.message.embeds) {
-                row.message.embeds.push(...newEmbeds);
-              } else {
-                row.message.embeds = newEmbeds;
+          try {
+            if (typeof args[1] !== "string") {
+              console.warn("[BetterCode] updateRows arg[1] is not a string, got:", typeof args[1]);
+              return;
+            }
+            const rows = JSON.parse(args[1]);
+            if (!Array.isArray(rows)) {
+              console.warn("[BetterCode] updateRows parsed rows is not an array");
+              return;
+            }
+            for (const row of rows) {
+              if (row?.message?.content && Array.isArray(row.message.content)) {
+                const originalEmbeds = row.message.embeds ?? [];
+                const [newContent, newEmbeds] = walkContent(row.message.content);
+                console.log("[BetterCode] Original embeds:", JSON.stringify(originalEmbeds));
+                console.log("[BetterCode] New embeds:", JSON.stringify(newEmbeds));
+                row.message.content = newContent;
+                if (row.message.embeds) {
+                  row.message.embeds.push(...newEmbeds);
+                } else {
+                  row.message.embeds = newEmbeds;
+                }
               }
             }
+            args[1] = JSON.stringify(rows);
+          } catch (e) {
+            console.error("[BetterCode] updateRows error:", e);
           }
-          args[1] = JSON.stringify(rows);
-        } catch (_) {}
-      }
-    );
+        }
+      );
 
       console.log("[BetterCode] Loaded!");
     } catch (err) {
