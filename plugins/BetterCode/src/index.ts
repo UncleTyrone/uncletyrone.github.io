@@ -261,7 +261,11 @@ const BetterCode = {
       return [content, embeds];
     }
 
-      unpatch = before(DCDChatManager, "updateRows", (args: [unknown, string]) => {
+      // Rain: before(methodName, parent, callback); Vendetta: before(parent, methodName, callback)
+      unpatch = (before as (a: unknown, b: unknown, c: (...args: unknown[]) => void) => () => void)(
+        "updateRows",
+        DCDChatManager,
+        (args: [unknown, string]) => {
         try {
           const rows = JSON.parse(args[1]);
           for (const row of rows) {
@@ -277,7 +281,8 @@ const BetterCode = {
           }
           args[1] = JSON.stringify(rows);
         } catch (_) {}
-      });
+      }
+    );
 
       console.log("[BetterCode] Loaded!");
     } catch (err) {
