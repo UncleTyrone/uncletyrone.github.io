@@ -2,7 +2,6 @@
 
 import { storage } from "@vendetta/plugin";
 import { before } from "@vendetta/patcher";
-import { findByProps } from "@vendetta/metro";
 import { ReactNative } from "@vendetta/metro/common";
 import Prism from "prismjs";
 
@@ -171,7 +170,7 @@ function walkContent(content: any[]): [any[], any[]] {
     if (
       obj.type === "codeBlock" &&
       obj.lang &&
-      Prism.languages[obj.lang]
+      (Prism.languages[obj.lang] ?? Prism.languages[langList[obj.lang]?.[0]?.toLowerCase()])
     ) {
       const langMeta =
         obj.lang in langList && langList[obj.lang][1]

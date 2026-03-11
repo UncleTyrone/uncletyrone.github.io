@@ -5,8 +5,13 @@ import { Forms, General } from "@vendetta/ui/components";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Linking } from "@vendetta/metro/common";
 
-const { ScrollView } = General;
-const { FormSection, FormSwitchRow, FormRow, FormIcon } = Forms;
+const ScrollView = General.ScrollView as any;
+const FormSection = Forms.FormSection as any;
+const FormSwitchRow = Forms.FormSwitchRow as any;
+const FormRow = Forms.FormRow as any;
+const FormIcon = Forms.FormIcon as any;
+const FormInput = Forms.FormInput as any;
+const FormRadioRow = Forms.FormRadioRow as any;
 
 const themeOptions: { key: string; label: string; description: string }[] = [
   {
@@ -76,11 +81,11 @@ export default function Settings() {
             storage.show_footer = v;
           }}
         />
-        <Forms.FormRow
+        <FormRow
           label="Footer text"
           subLabel="Used when footer label is enabled"
         />
-        <Forms.FormInput
+        <FormInput
           title=""
           placeholder="e.g. BetterCode, UncleTyrone, etc."
           value={footerText}
@@ -93,7 +98,7 @@ export default function Settings() {
 
       <FormSection title="Embed theme">
         {themeOptions.map((opt) => (
-          <Forms.FormRadioRow
+          <FormRadioRow
             key={opt.key}
             label={opt.label}
             subLabel={opt.description}
