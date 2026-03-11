@@ -214,10 +214,56 @@ const BetterCode = {
     }
 
     function walkContent(content: unknown[]): [unknown[], unknown[]] {
-      // Temporary: only apply gap fix, do not create embeds.
-      // This lets us verify that embed shape is the source of render failures.
-      const fixed = fixCodeblockGap(content);
-      return [fixed, []];
+      const embeds: unknown[] = [];
+      const nodes = content as { type?: string; content?: unknown; lang?: string }[];
+
+      for (const o of nodes) {
+        if (o?.type === "codeBlock" && o.lang && supportedLangs.includes(o.lang) && typeof o.content === "string") {
+          const codeText = o.content;
+          const meta = langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
+          const iconURL = `${LOGOS_BASE}/${meta}.png`;
+
+          const rawContent: unknown[] = [
+            {
+              content: highlightText(codeText, o.lang),
+              type: "paragraph",
+            },
+          ];
+
+          const footerLabel =
+            typeof storage.footer_text === "string" && storage.footer_text.trim().length
+              ? storage.footer_text.trim()
+              : "BetterCode";
+
+          if (storage.show_footer !== false) {
+            rawContent.push({ content: `-- ${footerLabel}`, type: "text" });
+          }
+
+          const { border, provider } = getEmbedColors();
+          const processColor = ReactNative?.processColor;
+          const borderColor = typeof processColor === "function" ? processColor(border) : hexToColorInt(border);
+          const providerColorVal = typeof processColor === "function" ? processColor(provider) : hexToColorInt(provider);
+
+          const embed = {
+            type: "rich",
+            description: rawContent,
+            author: {
+              name: meta,
+              iconURL,
+              iconProxyURL: iconURL,
+            },
+            borderLeftColor: borderColor,
+            providerColor: providerColorVal,
+            headerTextColor: 0xffffffff,
+            bodyTextColor: 0xffe0e0ff,
+          };
+
+          embeds.push(embed);
+        }
+      }
+
+      // Do not touch original content; only append embeds.
+      return [content, embeds];
     }
 
       // Rain: before(methodName, parent, callback); Vendetta: before(parent, methodName, callback)
