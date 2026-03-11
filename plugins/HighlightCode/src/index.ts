@@ -1,0 +1,194 @@
+import { storage } from "@vendetta/plugin";
+import { before } from "@vendetta/patcher";
+import { findByProps } from "@vendetta/metro";
+import { ReactNative } from "@vendetta/metro/common";
+import Prism from "prismjs";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-markdown";
+import "prismjs/components/prism-go";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-swift";
+import "prismjs/components/prism-perl";
+import "prismjs/components/prism-ruby";
+import "prismjs/components/prism-php";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-jsx";
+import "prismjs/components/prism-tsx";
+import "prismjs/components/prism-lua";
+import "prismjs/components/prism-kotlin";
+import "prismjs/components/prism-objectivec";
+import Settings from "./Settings";
+
+const theme: Record<string, string> = {
+  punctuation: "#959da5",
+  "class-name": "#fb8532",
+  keyword: "#ff7b72",
+  boolean: "#ff7b72",
+  parameter: "#f6f8fa",
+  function: "#b392f0",
+  property: "#b392f0",
+  comment: "#8b949e",
+  operator: "#79c0ff",
+  constant: "#79c0ff",
+  number: "#79c0ff",
+  string: "#79b8ff",
+  selector: "#79b8ff",
+  builtin: "#79b8ff",
+};
+
+const decorator: Record<string, string> = {
+  bold: "strong",
+  important: "strong",
+  italic: "em",
+};
+
+const supportedLangs = Object.keys(Prism.languages);
+const langList: Record<string, [string, boolean]> = {
+  html: ["html", true],
+  css: ["CSS", true],
+  javascript: ["JavaScript", true],
+  js: ["JavaScript", true],
+  python: ["Python", true],
+  py: ["Python", true],
+  bash: ["bash", true],
+  sh: ["bash", true],
+  shell: ["bash", true],
+  typescript: ["TypeScript", true],
+  ts: ["TypeScript", true],
+  tsx: ["React TSX", false],
+  c: ["c", true],
+  markdown: ["markdown", true],
+  md: ["markdown", true],
+  go: ["Go", true],
+  json: ["JSON", true],
+  swift: ["Swift", true],
+  perl: ["Perl", false],
+  ruby: ["Ruby", true],
+  rb: ["Ruby", true],
+  php: ["PHP", true],
+  java: ["Java", true],
+  jsx: ["React JSX", false],
+  lua: ["Lua", true],
+  kt: ["Kotlin", true],
+  kts: ["Kotlin", true],
+  objc: ["Objective-C", false],
+  objectivec: ["Objective-C", false],
+};
+
+const LOGOS_BASE = "https://raw.githubusercontent.com/m4fn3/HighlightCode/master/logos";
+
+let unpatch: (() => void) | undefined;
+
+export default {
+  onLoad: () => {
+    storage.show_line_num ??= false;
+
+    const View = findByProps("View");
+    const { DCDChatManager } = View.NativeModules;
+
+    function highlightText(text: string, lang: string): unknown[] {
+      if (storage.show_line_num) {
+        text = text
+          .split("\n")
+          .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
+          .join("\n");
+      }
+      const res = Prism.highlight(text, Prism.languages[lang], lang) as unknown[];
+      const contents: unknown[] = [];
+      for (const part of res) {
+        if (typeof part === "object" && part !== null && "type" in part) {
+          const p = part as { type?: string; alias?: string; content?: unknown };
+          const style = p.alias ?? p.type ?? "";
+          if (theme[style]) {
+            const color = theme[style];
+            contents.push({
+              content: [{ type: "text", content: p.content }],
+              target: "usernameOnClick",
+              context: {
+                username: 1,
+                usernameOnClick: { linkColor: ReactNative.processColor(color) },
+                medium: true,
+              },
+              type: "link",
+            });
+          } else if (decorator[style]) {
+            contents.push({ type: decorator[style], content: p.content });
+          } else {
+            contents.push({ type: "text", content: p.content });
+          }
+        } else {
+          contents.push({ type: "text", content: part });
+        }
+      }
+      return contents;
+    }
+
+    function walkContent(content: unknown[]): [unknown[], unknown[]] {
+      const embeds: unknown[] = [];
+      content = content.map((obj) => {
+        const o = obj as { type?: string; content?: unknown; lang?: string };
+        if (typeof o.content === "object" && Array.isArray(o.content)) {
+          o.content = walkContent(o.content)[0];
+        }
+        if (o.type === "codeBlock" && o.lang && supportedLangs.includes(o.lang)) {
+          const meta =
+            langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
+          const iconURL = `${LOGOS_BASE}/${meta}.png`;
+          const rawContent = [
+            {
+              content: highlightText(String(o.content), o.lang),
+              type: "paragraph",
+            },
+            { content: "-- By CodeHighlight", type: "text" },
+          ];
+          const embed = {
+            type: "rich",
+            description: rawContent,
+            author: {
+              name: langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang,
+              iconURL,
+              iconProxyURL: iconURL,
+            },
+            borderLeftColor: ReactNative.processColor("#e0e0ff"),
+            providerColor: ReactNative.processColor("#e0e0ff"),
+            headerTextColor: 4294967295,
+            bodyTextColor: 4292599521,
+          };
+          embeds.push(embed);
+          o.type = "text";
+          o.content = "";
+        }
+        return obj;
+      }) as unknown[];
+      return [content, embeds];
+    }
+
+    unpatch = before(DCDChatManager, "updateRows", (args: [unknown, string]) => {
+      try {
+        const rows = JSON.parse(args[1]);
+        for (const row of rows) {
+          if (row?.message?.content) {
+            const [newContent, newEmbeds] = walkContent(row.message.content);
+            row.message.content = newContent;
+            if (row.message.embeds) {
+              row.message.embeds.push(...newEmbeds);
+            } else {
+              row.message.embeds = newEmbeds;
+            }
+          }
+        }
+        args[1] = JSON.stringify(rows);
+      } catch (_) {}
+    });
+
+    console.log("[HighlightCode] Loaded!");
+  },
+  onUnload: () => {
+    unpatch?.();
+    console.log("[HighlightCode] Unloaded!");
+  },
+  settings: Settings,
+};

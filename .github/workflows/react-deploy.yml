@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build React app
+    - name: Build (plugins + React app)
       run: npm run build
       
     - name: Debug build output

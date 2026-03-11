@@ -1,0 +1,14 @@
+{
+  "name": "HighlightCode",
+  "description": "Code highlighting for Discord!",
+  "authors": [
+    {
+      "name": "mafu",
+      "id": "519760564755365888"
+    }
+  ],
+  "main": "src/index.ts",
+  "vendetta": {
+    "icon": "ic_channel_nsfw_24px"
+  }
+}
