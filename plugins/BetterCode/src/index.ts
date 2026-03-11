@@ -220,39 +220,11 @@ const BetterCode = {
       for (const o of nodes) {
         if (o?.type === "codeBlock" && o.lang && supportedLangs.includes(o.lang) && typeof o.content === "string") {
           const codeText = o.content;
-          const meta = langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
-          const iconURL = `${LOGOS_BASE}/${meta}.png`;
 
-          // Plain-text body for Rain embeds; no rich link nodes.
-          const rawContent: unknown[] = [
-            { type: "text", content: codeText },
-          ];
-          const footerLabel =
-            typeof storage.footer_text === "string" && storage.footer_text.trim().length
-              ? storage.footer_text.trim()
-              : "BetterCode";
-
-          if (storage.show_footer !== false) {
-            rawContent.push({ content: `-- ${footerLabel}`, type: "text" });
-          }
-
-          const { border, provider } = getEmbedColors();
-          const processColor = ReactNative?.processColor;
-          const borderColor = typeof processColor === "function" ? processColor(border) : hexToColorInt(border);
-          const providerColorVal = typeof processColor === "function" ? processColor(provider) : hexToColorInt(provider);
-
+          // Minimal embed for Rain: only type + description string.
           const embed = {
             type: "rich",
-            description: rawContent,
-            author: {
-              name: meta,
-              iconURL,
-              iconProxyURL: iconURL,
-            },
-            borderLeftColor: borderColor,
-            providerColor: providerColorVal,
-            headerTextColor: 0xffffffff,
-            bodyTextColor: 0xffe0e0ff,
+            description: codeText,
           };
 
           embeds.push(embed);
