@@ -1,0 +1,3 @@
+# Generated plugin bundles (minified IIFE - not meant to be linted)
+public/plugins/
+build/plugins/

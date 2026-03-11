@@ -1,3 +1,4 @@
+/// <reference path="../vendetta.d.ts" />
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { Forms, General } from "@vendetta/ui/components";

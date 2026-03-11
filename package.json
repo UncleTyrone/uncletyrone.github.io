@@ -22,12 +22,25 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "devtools": "node scripts/raindevtools-local.mjs"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "ignorePatterns": [
+      "public/plugins/**",
+      "build/plugins/**"
+    ],
+    "overrides": [
+      {
+        "files": ["plugins/**/*.ts", "plugins/**/*.tsx"],
+        "rules": {
+          "import/no-unresolved": "off"
+        }
+      }
     ]
   },
   "browserslist": {
@@ -51,6 +64,7 @@
     "prismjs": "^1.29.0",
     "rollup": "^3.29.5",
     "rollup-plugin-esbuild": "^5.0.0",
-    "vendetta-types": "latest"
+    "vendetta-types": "latest",
+    "ws": "^8.19.0"
   }
 }

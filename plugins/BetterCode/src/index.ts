@@ -1,3 +1,4 @@
+/// <reference path="../vendetta.d.ts" />
 import { storage } from "@vendetta/plugin";
 import { before } from "@vendetta/patcher";
 import { findByProps } from "@vendetta/metro";
@@ -82,17 +83,26 @@ const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 
 let unpatch: (() => void) | undefined;
 
-export default {
+const BetterCode = {
   onLoad: () => {
-    // Defaults
-    storage.show_line_num ??= false;
-    storage.show_footer ??= true;
-    storage.footer_text ??= "BetterCode";
-    storage.embed_theme ??= "soft";
-    storage.gap_fix ??= true;
+    try {
+      // Defaults
+      storage.show_line_num ??= false;
+      storage.show_footer ??= true;
+      storage.footer_text ??= "BetterCode";
+      storage.embed_theme ??= "soft";
+      storage.gap_fix ??= true;
 
-    const View = findByProps("View");
-    const { DCDChatManager } = View.NativeModules;
+      const View = findByProps("View");
+      if (!View?.NativeModules?.DCDChatManager) {
+        console.error("[BetterCode] Could not find DCDChatManager. View:", !!View, "NativeModules:", !!View?.NativeModules);
+        return;
+      }
+      if (typeof ReactNative?.processColor !== "function") {
+        console.error("[BetterCode] ReactNative.processColor not found");
+        return;
+      }
+      const { DCDChatManager } = View.NativeModules;
 
     function highlightText(text: string, lang: string): unknown[] {
       if (storage.show_line_num) {
@@ -101,12 +111,13 @@ export default {
           .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
           .join("\n");
       }
-      const res = Prism.highlight(text, Prism.languages[lang], lang) as unknown[];
+      const grammar = Prism.languages[lang] ?? {};
+      const res = Prism.tokenize(text, grammar) as (string | { type?: string; alias?: string | string[]; content?: unknown })[];
       const contents: unknown[] = [];
       for (const part of res) {
         if (typeof part === "object" && part !== null && "type" in part) {
-          const p = part as { type?: string; alias?: string; content?: unknown };
-          const style = p.alias ?? p.type ?? "";
+          const p = part as { type?: string; alias?: string | string[]; content?: unknown };
+          const style = (Array.isArray(p.alias) ? p.alias[0] : p.alias) ?? p.type ?? "";
           if (theme[style]) {
             const color = theme[style];
             contents.push({
@@ -222,25 +233,29 @@ export default {
       return [content, embeds];
     }
 
-    unpatch = before(DCDChatManager, "updateRows", (args: [unknown, string]) => {
-      try {
-        const rows = JSON.parse(args[1]);
-        for (const row of rows) {
-          if (row?.message?.content) {
-            const [newContent, newEmbeds] = walkContent(row.message.content);
-            row.message.content = newContent;
-            if (row.message.embeds) {
-              row.message.embeds.push(...newEmbeds);
-            } else {
-              row.message.embeds = newEmbeds;
+      unpatch = before(DCDChatManager, "updateRows", (args: [unknown, string]) => {
+        try {
+          const rows = JSON.parse(args[1]);
+          for (const row of rows) {
+            if (row?.message?.content) {
+              const [newContent, newEmbeds] = walkContent(row.message.content);
+              row.message.content = newContent;
+              if (row.message.embeds) {
+                row.message.embeds.push(...newEmbeds);
+              } else {
+                row.message.embeds = newEmbeds;
+              }
             }
           }
-        }
-        args[1] = JSON.stringify(rows);
-      } catch (_) {}
-    });
+          args[1] = JSON.stringify(rows);
+        } catch (_) {}
+      });
 
-    console.log("[BetterCode] Loaded!");
+      console.log("[BetterCode] Loaded!");
+    } catch (err) {
+      console.error("[BetterCode] Load error:", err);
+      throw err;
+    }
   },
   onUnload: () => {
     unpatch?.();
@@ -248,3 +263,5 @@ export default {
   },
   settings: Settings,
 };
+
+export default BetterCode;

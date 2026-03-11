@@ -1,4 +1,4 @@
-import { readFile, writeFile, readdir, mkdir, cp } from "fs/promises";
+import { readFile, writeFile, readdir, mkdir, cp, stat } from "fs/promises";
 import { dirname, join } from "path";
 import { createHash } from "crypto";
 
@@ -62,7 +62,9 @@ const plugins = [
 ];
 
 for (let plug of await readdir("./plugins")) {
-    const manifest = JSON.parse(await readFile(`./plugins/${plug}/manifest.json`, "utf-8"));
+    const plugPath = `./plugins/${plug}`;
+    if (!(await stat(plugPath)).isDirectory()) continue;
+    const manifest = JSON.parse(await readFile(`${plugPath}/manifest.json`, "utf-8"));
     const outPath = `${OUTPUT_DIR}/${plug}/index.js`;
 
     try {
