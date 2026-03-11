@@ -81,6 +81,15 @@ const langList: Record<string, [string, boolean]> = {
 
 const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 
+function hexToColorInt(hex: string): number {
+  const match = hex.replace(/^#/, "").match(/.{2}/g);
+  if (!match || match.length < 3) return 0xffe0e0ff;
+  const r = parseInt(match[0], 16);
+  const g = parseInt(match[1], 16);
+  const b = parseInt(match[2], 16);
+  return 0xff000000 | (r << 16) | (g << 8) | b;
+}
+
 let unpatch: (() => void) | undefined;
 
 const BetterCode = {
@@ -129,12 +138,17 @@ const BetterCode = {
         if (typeof part === "object" && part !== null && "type" in part) {
           const p = part as { type?: string; alias?: string | string[]; content?: unknown };
           const style = (Array.isArray(p.alias) ? p.alias[0] : p.alias) ?? p.type ?? "";
+          const textContent = typeof p.content === "string"
+            ? p.content
+            : Array.isArray(p.content)
+              ? (p.content as unknown[]).map((c: unknown) => typeof c === "string" ? c : (c as { content?: unknown })?.content ?? "").join("")
+              : String(p.content ?? "");
           if (theme[style]) {
             const color = theme[style];
             const processColor = ReactNative?.processColor;
-            const linkColor = typeof processColor === "function" ? processColor(color) : color;
+            const linkColor = typeof processColor === "function" ? processColor(color) : hexToColorInt(color);
             contents.push({
-              content: [{ type: "text", content: p.content }],
+              content: [{ type: "text", content: textContent }],
               target: "usernameOnClick",
               context: {
                 username: 1,
@@ -144,9 +158,9 @@ const BetterCode = {
               type: "link",
             });
           } else if (decorator[style]) {
-            contents.push({ type: decorator[style], content: p.content });
+            contents.push({ type: decorator[style], content: textContent });
           } else {
-            contents.push({ type: "text", content: p.content });
+            contents.push({ type: "text", content: textContent });
           }
         } else {
           contents.push({ type: "text", content: part });
@@ -236,8 +250,8 @@ const BetterCode = {
 
           const { border, provider } = getEmbedColors();
           const processColor = ReactNative?.processColor;
-          const borderColor = typeof processColor === "function" ? processColor(border) : border;
-          const providerColorVal = typeof processColor === "function" ? processColor(provider) : provider;
+          const borderColor = typeof processColor === "function" ? processColor(border) : hexToColorInt(border);
+          const providerColorVal = typeof processColor === "function" ? processColor(provider) : hexToColorInt(provider);
 
           const embed = {
             type: "rich",
