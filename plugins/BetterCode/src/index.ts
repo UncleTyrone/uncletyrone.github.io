@@ -5,9 +5,12 @@ import { before } from "@vendetta/patcher";
 import { findByProps } from "@vendetta/metro";
 import { ReactNative } from "@vendetta/metro/common";
 import Prism from "prismjs";
+
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-typescript";
+
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-bash";
-import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-c";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-go";
@@ -17,8 +20,10 @@ import "prismjs/components/prism-perl";
 import "prismjs/components/prism-ruby";
 import "prismjs/components/prism-php";
 import "prismjs/components/prism-java";
+
 import "prismjs/components/prism-jsx";
 import "prismjs/components/prism-tsx";
+
 import "prismjs/components/prism-lua";
 import "prismjs/components/prism-kotlin";
 import "prismjs/components/prism-objectivec";
@@ -103,7 +108,7 @@ function highlightText(text: string, lang: string): unknown[] {
   }
 
   // Use Prism.highlight like original HighlightCode
-  const grammar = Prism.languages[lang];
+  const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
   if (!grammar) {
     return [{ type: "text", content: text }];
   }
@@ -211,16 +216,14 @@ function walkContent(content: any[]): [any[], any[]] {
 // ---- Vendetta/Bunny plugin exports -----------------------------------------
 
 export const onLoad = () => {
-  // defaults
   storage.show_line_num ??= false;
 
-  const View = findByProps("View") as any;
-  const { DCDChatManager } = View.NativeModules ?? {};
+  const { DCDChatManager } =
+    ((ReactNative as unknown as { NativeModules?: { DCDChatManager?: any } })
+      .NativeModules) ?? {};
 
   if (!DCDChatManager || typeof DCDChatManager.updateRows !== "function") {
-    console.error(
-      "[BetterCode] DCDChatManager.updateRows not found; aborting",
-    );
+    console.error("[BetterCode] DCDChatManager.updateRows not found; aborting");
     return;
   }
 
