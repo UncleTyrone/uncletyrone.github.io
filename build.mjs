@@ -1,5 +1,5 @@
-import { readFile, writeFile, readdir, mkdir } from "fs/promises";
-import { dirname } from "path";
+import { readFile, writeFile, readdir, mkdir, cp } from "fs/promises";
+import { dirname, join } from "path";
 import { createHash } from "crypto";
 
 import { rollup } from "rollup";
@@ -93,6 +93,18 @@ for (let plug of await readdir("./plugins")) {
         manifest.hash = createHash("sha256").update(toHash).digest("hex");
         manifest.main = "index.js";
         await writeFile(`${OUTPUT_DIR}/${plug}/manifest.json`, JSON.stringify(manifest));
+
+        const logosSrc = join("./plugins", plug, "logos");
+        try {
+            const logosDir = await readdir(logosSrc);
+            if (logosDir.length > 0) {
+                const logosDest = `${OUTPUT_DIR}/${plug}/logos`;
+                await mkdir(logosDest, { recursive: true });
+                await cp(logosSrc, logosDest, { recursive: true });
+            }
+        } catch (_) {
+            // No logos folder, skip
+        }
     
         console.log(`Successfully built ${manifest.name}!`);
     } catch (e) {

@@ -1,0 +1,14 @@
+{
+  "name": "BetterCode",
+  "description": "Better code highlighting and code embed gap fix for Discord!",
+  "authors": [
+    {
+      "name": "UncleTyrone",
+      "id": "178952225748418560"
+    }
+  ],
+  "main": "src/index.ts",
+  "vendetta": {
+    "icon": "ic_channel_nsfw_24px"
+  }
+}

@@ -78,13 +78,18 @@ const langList: Record<string, [string, boolean]> = {
   objectivec: ["Objective-C", false],
 };
 
-const LOGOS_BASE = "https://raw.githubusercontent.com/m4fn3/HighlightCode/master/logos";
+const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 
 let unpatch: (() => void) | undefined;
 
 export default {
   onLoad: () => {
+    // Defaults
     storage.show_line_num ??= false;
+    storage.show_footer ??= true;
+    storage.footer_text ??= "BetterCode";
+    storage.embed_theme ??= "soft";
+    storage.gap_fix ??= true;
 
     const View = findByProps("View");
     const { DCDChatManager } = View.NativeModules;
@@ -126,9 +131,49 @@ export default {
       return contents;
     }
 
+    function fixCodeblockGap(content: unknown[]): unknown[] {
+      if (storage.gap_fix === false) return content;
+      const nodes = content as { type?: string; content?: unknown; lang?: string }[];
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (node?.type === "codeBlock" && typeof node.content === "string") {
+          // Trim trailing newlines from the code block content
+          node.content = node.content.replace(/\n+$/g, "");
+
+          // If there's an immediately following blank text node, remove it
+          const next = nodes[i + 1];
+          if (
+            next &&
+            next.type === "text" &&
+            (next.content === "" ||
+              (typeof next.content === "string" && /^\s*$/.test(next.content)))
+          ) {
+            nodes.splice(i + 1, 1);
+            i--;
+          }
+        }
+      }
+      return nodes;
+    }
+
+    function getEmbedColors(): { border: string; provider: string } {
+      const key =
+        typeof storage.embed_theme === "string" && storage.embed_theme.length > 0
+          ? storage.embed_theme
+          : "soft";
+      switch (key) {
+        case "vibrant":
+          return { border: "#ff8f8f", provider: "#ffb3b3" };
+        case "mono":
+          return { border: "#444c56", provider: "#373e47" };
+        default:
+          return { border: "#e0e0ff", provider: "#e0e0ff" };
+      }
+    }
+
     function walkContent(content: unknown[]): [unknown[], unknown[]] {
       const embeds: unknown[] = [];
-      content = content.map((obj) => {
+      content = fixCodeblockGap(content).map((obj) => {
         const o = obj as { type?: string; content?: unknown; lang?: string };
         if (typeof o.content === "object" && Array.isArray(o.content)) {
           o.content = walkContent(o.content)[0];
@@ -137,13 +182,24 @@ export default {
           const meta =
             langList[o.lang]?.[1] ? langList[o.lang][0] : o.lang;
           const iconURL = `${LOGOS_BASE}/${meta}.png`;
-          const rawContent = [
+          const rawContent: unknown[] = [
             {
               content: highlightText(String(o.content), o.lang),
               type: "paragraph",
             },
-            { content: "-- By CodeHighlight", type: "text" },
           ];
+
+          const footerLabel =
+            typeof storage.footer_text === "string" && storage.footer_text.trim().length
+              ? storage.footer_text.trim()
+              : "BetterCode";
+
+          if (storage.show_footer !== false) {
+            rawContent.push({ content: `-- ${footerLabel}`, type: "text" });
+          }
+
+          const { border, provider } = getEmbedColors();
+
           const embed = {
             type: "rich",
             description: rawContent,
@@ -152,8 +208,8 @@ export default {
               iconURL,
               iconProxyURL: iconURL,
             },
-            borderLeftColor: ReactNative.processColor("#e0e0ff"),
-            providerColor: ReactNative.processColor("#e0e0ff"),
+            borderLeftColor: ReactNative.processColor(border),
+            providerColor: ReactNative.processColor(provider),
             headerTextColor: 4294967295,
             bodyTextColor: 4292599521,
           };
@@ -184,11 +240,11 @@ export default {
       } catch (_) {}
     });
 
-    console.log("[HighlightCode] Loaded!");
+    console.log("[BetterCode] Loaded!");
   },
   onUnload: () => {
     unpatch?.();
-    console.log("[HighlightCode] Unloaded!");
+    console.log("[BetterCode] Unloaded!");
   },
   settings: Settings,
 };
