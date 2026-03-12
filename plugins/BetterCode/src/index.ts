@@ -300,29 +300,24 @@ export default {
 
       // Use correct signature: instead(funcName, parent, callback)
       // Use before patcher to modify args before function executes
+            // Use before patcher to modify args before function executes
       unpatch = before(
         "updateRows",
         DCDChatManager,
-        ((args: [unknown, string]) => {
+        ((args: [unknown, { rows: any[], isLoadingAtTop?: boolean }]) => {
           console.log("[BetterCode] before() called");
           
-          if (typeof args[1] !== "string") {
-            console.warn("[BetterCode] args[1] is not a string");
+          // Log for debugging
+          console.log("[BetterCode] args[0]:", typeof args[0]);
+          console.log("[BetterCode] args[1]:", typeof args[1]);
+          console.log("[BetterCode] args[1].rows:", Array.isArray(args[1]?.rows));
+          
+          if (!args[1] || !Array.isArray(args[1].rows)) {
+            console.warn("[BetterCode] Invalid args format");
             return;
           }
 
-          let rows: any[];
-          try {
-            rows = JSON.parse(args[1]);
-          } catch (e) {
-            console.warn("[BetterCode] Failed to parse JSON:", e);
-            return;
-          }
-
-          if (!Array.isArray(rows)) {
-            console.warn("[BetterCode] Parsed rows is not an array");
-            return;
-          }
+          const rows = args[1].rows;
 
           for (const row of rows) {
             if (row?.message?.content && Array.isArray(row.message.content)) {
@@ -332,7 +327,6 @@ export default {
             }
           }
 
-          args[1] = JSON.stringify(rows);
           console.log("[BetterCode] Successfully processed rows");
         }) as any
       );
