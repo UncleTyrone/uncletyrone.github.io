@@ -28,12 +28,7 @@ import "prismjs/components/prism-kotlin";
 import "prismjs/components/prism-objectivec";
 
 // Import settings
-let Settings: any;
-try {
-  Settings = require("./Settings").default ?? require("./Settings");
-} catch (e) {
-  console.warn("[BetterCode] Settings failed to load:", e);
-}
+import Settings from "./Settings";
 
 /*
 
