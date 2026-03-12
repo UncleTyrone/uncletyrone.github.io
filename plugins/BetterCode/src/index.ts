@@ -240,7 +240,7 @@ export default {
 
       console.log("[BetterCode] DCDChatManager found");
 
-      // Use correct signature: instead(funcName, parent, callback)
+            // Use correct signature: instead(funcName, parent, callback)
       unpatch = instead(
         "updateRows",     // func - method name as string (first parameter)
         DCDChatManager,   // parent - the parent object (second parameter)
@@ -249,7 +249,7 @@ export default {
           
           if (!args[1] || !Array.isArray(args[1].rows)) {
             console.warn("[BetterCode] Invalid args format");
-            return;
+            return origFunc.apply(DCDChatManager, args);
           }
 
           const rows = args[1].rows;
@@ -267,6 +267,7 @@ export default {
           }
 
           console.log("[BetterCode] Successfully processed rows");
+          return origFunc.apply(DCDChatManager, args);
         }) as any
       );
       
