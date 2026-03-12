@@ -299,7 +299,9 @@ export default {
 
       */
 
-      const MessageParser = findByProps("parse", "parseTopic") ?? findByProps("parse");
+      const MessageParser = findByProps("parse", "parseTopic") ?? findByProps("parse") ?? findByProps("parseMessage");
+      console.log("[BetterCode] MessageParser module:", MessageParser);
+      console.log("[BetterCode] parse:", MessageParser?.parse);
 
       if (!MessageParser) {
         console.error("[BetterCode] MessageParser not found");
@@ -313,7 +315,9 @@ export default {
 
       console.log("[BetterCode] MessageParser found");
 
-      unpatch = after("parse", MessageParser, (args: any[], res: any) => {
+      const target = MessageParser?.default ?? MessageParser;
+
+      unpatch = after("parse", target, (args: any[], res: any) => {
         console.log("[BetterCode] Parser patch called");
 
         try {
