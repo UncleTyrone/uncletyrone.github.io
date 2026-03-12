@@ -28,6 +28,15 @@ import "prismjs/components/prism-objectivec";
 // Import settings
 import Settings from "./Settings";
 
+type Message = {
+  content: any[];
+  embeds?: any[];
+};
+
+type Row = {
+  message: Message;
+};
+
 // Safety check for processColor
 const processColor: (color: string) => number =
   ReactNative.processColor?.bind(ReactNative) ??
@@ -216,7 +225,6 @@ function walkContent(content: any[]): [any[], any[]] {
   return [nodes, embeds];
 }
 
-// BetterCode plugin main object
 export default {
   onLoad: () => {
     console.log("[BetterCode] Loading...");
@@ -232,42 +240,33 @@ export default {
 
       console.log("[BetterCode] DCDChatManager found");
 
-      // Use the correct signature: (funcName, parent, callback)
+      // Use correct signature: instead(funcName, parent, callback)
       unpatch = instead(
-        "updateRows",     // funcName - the method name as string
-        DCDChatManager,   // parent - the parent object
-        ((args: unknown[], origFunc: Function) => {
-          console.log("[BetterCode] instead() called with args:", args);
+        "updateRows",     // func - method name as string (first parameter)
+        DCDChatManager,   // parent - the parent object (second parameter)
+        ((args: [unknown, { rows: Row[], isLoadingAtTop?: boolean }], origFunc: Function) => {
+          console.log("[BetterCode] instead() called");
           
-          if (args.length < 2 || typeof args[1] !== "string") {
-            console.warn("[BetterCode] args[1] not string, passing through");
+          if (!args[1] || !Array.isArray(args[1].rows)) {
+            console.warn("[BetterCode] Invalid args format");
             return;
           }
 
-          try {
-            const rows = JSON.parse(args[1]);
-            if (!Array.isArray(rows)) {
-              console.warn("[BetterCode] rows is not an array");
-              return;
-            }
-
-            for (const row of rows) {
-              if (row?.message?.content && Array.isArray(row.message.content)) {
-                const [newContent, newEmbeds] = walkContent(row.message.content);
-                row.message.content = newContent;
-                if (row.message.embeds) {
-                  row.message.embeds.push(...newEmbeds);
-                } else {
-                  row.message.embeds = newEmbeds;
-                }
+          const rows = args[1].rows;
+          
+          for (const row of rows) {
+            if (row?.message?.content && Array.isArray(row.message.content)) {
+              const [newContent, newEmbeds] = walkContent(row.message.content);
+              row.message.content = newContent;
+              if (row.message.embeds) {
+                row.message.embeds.push(...newEmbeds);
+              } else {
+                row.message.embeds = newEmbeds;
               }
             }
-
-            args[1] = JSON.stringify(rows);
-            console.log("[BetterCode] Successfully processed rows");
-          } catch (e) {
-            console.error("[BetterCode] Processing error:", e);
           }
+
+          console.log("[BetterCode] Successfully processed rows");
         }) as any
       );
       
