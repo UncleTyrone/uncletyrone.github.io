@@ -318,10 +318,10 @@ export default {
         return false;
       }
 
-      const MessageStore = findByProps("receiveMessage", "getMessage")
+      const MessageStore = findByProps("receiveMessage", "updateMessage")
       console.log("[BetterCode] MessageStore module:", MessageStore);
 
-      if (!MessageStore) {
+      if (!MessageStore || typeof MessageStore.receiveMessage !== "function") {
         console.error("[BetterCode] MessageStore not found");
         return;
       }
