@@ -1,6 +1,6 @@
 // BetterCode plugin - Fixed version with correct Vendetta patcher usage
 import { storage } from "@vendetta/plugin";
-import { instead } from "@vendetta/patcher";
+import { before } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
 import Prism from "prismjs";
@@ -237,31 +237,28 @@ function walkContent(content: any[]): [any[], any[]] {
     }
 
     if (obj.type === "codeBlock" && obj.lang) {
-      // Normalize language to lowercase for lookup
       const langLower = obj.lang.toLowerCase();
       
-      // First check if we have this language directly in Prism
-      if (Prism.languages[langLower]) {
+      // Check if Prism supports this language
+      if (Prism.languages[langLower] || Prism.languages[langList[langLower]?.[0]?.toLowerCase()]) {
         try {
           const langMeta = langList[langLower]?.[0] || obj.lang;
           const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
-          // Try using Prism.tokenize first, fall back to simple text if it fails
-          let highlightContent: any[] = [];
-          try {
-            highlightContent = highlightText(obj.content, langLower);
-            // If highlightContent is just a single text element, we might want to simplify
-            if (highlightContent.length === 1 && highlightContent[0].type === "text") {
-              highlightContent = [{ type: "text", content: obj.content }];
-            }
-          } catch (e) {
-            console.warn("[BetterCode] Highlight failed, using plain text");
-            highlightContent = [{ type: "text", content: obj.content }];
-          }
+          const rawContent: any[] = [
+            {
+              content: highlightText(obj.content, langLower),
+              type: "paragraph",
+            },
+            {
+              content: "-- BetterCode",
+              type: "text",
+            },
+          ];
 
           const embed = {
             type: "rich",
-            description: [{ type: "paragraph", content: highlightContent }],
+            description: rawContent,
             author: {
               name: langMeta,
               iconURL: iconURL,
@@ -278,48 +275,6 @@ function walkContent(content: any[]): [any[], any[]] {
           obj.content = "";
         } catch (error) {
           console.error("[BetterCode] Code block processing error:", error);
-        }
-      } 
-      // Then check mapped languages
-      else if (langList[langLower]) {
-        const targetLang = langList[langLower][0].toLowerCase();
-        if (Prism.languages[targetLang]) {
-          try {
-            const langMeta = langList[langLower][0];
-            const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
-
-            // Try using Prism.tokenize first, fall back to simple text if it fails
-            let highlightContent: any[] = [];
-            try {
-              highlightContent = highlightText(obj.content, targetLang);
-              if (highlightContent.length === 1 && highlightContent[0].type === "text") {
-                highlightContent = [{ type: "text", content: obj.content }];
-              }
-            } catch (e) {
-              console.warn("[BetterCode] Highlight failed, using plain text");
-              highlightContent = [{ type: "text", content: obj.content }];
-            }
-
-            const embed = {
-              type: "rich",
-              description: [{ type: "paragraph", content: highlightContent }],
-              author: {
-                name: langMeta,
-                iconURL: iconURL,
-                iconProxyURL: iconURL,
-              },
-              borderLeftColor: processColor("#e0e0ff"),
-              providerColor: processColor("#e0e0ff"),
-              headerTextColor: 0xffffffff,
-              bodyTextColor: 0xffe0e0ff,
-            };
-
-            embeds.push(embed);
-            obj.type = "text";
-            obj.content = "";
-          } catch (error) {
-            console.error("[BetterCode] Code block processing error:", error);
-          }
         }
       }
     }
@@ -343,34 +298,42 @@ export default {
 
       console.log("[BetterCode] DCDChatManager found");
 
-            // Use correct signature: instead(funcName, parent, callback)
-      unpatch = instead(
-        "updateRows",     // func - method name as string (first parameter)
-        DCDChatManager,   // parent - the parent object (second parameter)
-        ((args: [unknown, { rows: Row[], isLoadingAtTop?: boolean }], origFunc: Function) => {
-          console.log("[BetterCode] instead() called");
+      // Use correct signature: instead(funcName, parent, callback)
+      // Use before patcher to modify args before function executes
+      unpatch = before(
+        "updateRows",
+        DCDChatManager,
+        ((args: [unknown, string]) => {
+          console.log("[BetterCode] before() called");
           
-          if (!args[1] || !Array.isArray(args[1].rows)) {
-            console.warn("[BetterCode] Invalid args format");
-            return origFunc.apply(DCDChatManager, args);
+          if (typeof args[1] !== "string") {
+            console.warn("[BetterCode] args[1] is not a string");
+            return;
           }
 
-          const rows = args[1].rows;
-          
+          let rows: any[];
+          try {
+            rows = JSON.parse(args[1]);
+          } catch (e) {
+            console.warn("[BetterCode] Failed to parse JSON:", e);
+            return;
+          }
+
+          if (!Array.isArray(rows)) {
+            console.warn("[BetterCode] Parsed rows is not an array");
+            return;
+          }
+
           for (const row of rows) {
             if (row?.message?.content && Array.isArray(row.message.content)) {
               const [newContent, newEmbeds] = walkContent(row.message.content);
               row.message.content = newContent;
-              if (row.message.embeds) {
-                row.message.embeds.push(...newEmbeds);
-              } else {
-                row.message.embeds = newEmbeds;
-              }
+              row.message.embeds ? row.message.embeds.push(...newEmbeds) : row.message.embeds = newEmbeds;
             }
           }
 
+          args[1] = JSON.stringify(rows);
           console.log("[BetterCode] Successfully processed rows");
-          return origFunc.apply(DCDChatManager, args);
         }) as any
       );
       
