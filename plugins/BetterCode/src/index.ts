@@ -301,20 +301,16 @@ export default {
       // Use correct signature: instead(funcName, parent, callback)
       // Use before patcher to modify args before function executes
             // Use before patcher to modify args before function executes
+            // Use before patcher to modify args before function executes
       unpatch = before(
         "updateRows",
         DCDChatManager,
         ((args: [unknown, { rows: any[], isLoadingAtTop?: boolean }]) => {
           console.log("[BetterCode] before() called");
           
-          // Log for debugging
-          console.log("[BetterCode] args[0]:", typeof args[0]);
-          console.log("[BetterCode] args[1]:", typeof args[1]);
-          console.log("[BetterCode] args[1].rows:", Array.isArray(args[1]?.rows));
-          
           if (!args[1] || !Array.isArray(args[1].rows)) {
             console.warn("[BetterCode] Invalid args format");
-            return;
+            return args; // Return original args if invalid
           }
 
           const rows = args[1].rows;
@@ -328,6 +324,7 @@ export default {
           }
 
           console.log("[BetterCode] Successfully processed rows");
+          return args; // Explicitly return modified args
         }) as any
       );
       
