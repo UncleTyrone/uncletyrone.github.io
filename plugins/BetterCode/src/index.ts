@@ -121,50 +121,104 @@ function highlightText(text: string, lang: string): unknown[] {
       return [{ type: "text", content: text }];
     }
 
-    // Check if Prism has the tokenize method
-    if (!grammar || typeof Prism.tokenize !== "function") {
-      console.warn("[BetterCode] Prism.tokenize not available");
-      return [{ type: "text", content: text }];
-    }
-
-    const res = Prism.highlight(text, grammar, lang) as any;
-    const contents: unknown[] = [];
-
-    if (typeof res === "string") {
-      contents.push({ type: "text", content: res });
-      return contents;
-    }
-
-    for (const part of res) {
-      if (typeof part === "object" && part !== null) {
-        const style = (part.alias ?? part.type) as string;
-        const content = part.content;
-
-        if (theme[style]) {
-          const color = theme[style];
-          contents.push({
-            content: [{ type: "text", content }],
-            target: "usernameOnClick",
-            context: {
-              username: 1,
-              usernameOnClick: {
-                linkColor: processColor(color),
+    // Try using tokenize directly first
+    try {
+      const tokens = Prism.tokenize(text, grammar);
+      const contents: unknown[] = [];
+      
+      // Process tokens recursively
+      function processToken(token: any): any {
+        if (typeof token === "string") {
+          return { type: "text", content: token };
+        } else if (Array.isArray(token)) {
+          return token.map(processToken);
+        } else if (token && typeof token === "object") {
+          if (token.content && typeof token.content !== "string") {
+            return {
+              type: token.type,
+              content: processToken(token.content),
+            };
+          }
+          
+          const style = (token.alias ?? token.type) as string;
+          
+          if (theme[style]) {
+            const color = theme[style];
+            return {
+              content: [{ type: "text", content: token.content }],
+              target: "usernameOnClick",
+              context: {
+                username: 1,
+                usernameOnClick: {
+                  linkColor: processColor(color),
+                },
+                medium: true,
               },
-              medium: true,
-            },
-            type: "link",
-          });
-        } else if (decorator[style]) {
-          contents.push({ type: decorator[style], content });
-        } else {
-          contents.push({ type: "text", content });
+              type: "link",
+            };
+          } else if (decorator[style]) {
+            return { type: decorator[style], content: token.content };
+          } else {
+            return { type: "text", content: token.content };
+          }
         }
+        return { type: "text", content: String(token) };
+      }
+      
+      const processedTokens = processToken(tokens);
+      if (Array.isArray(processedTokens)) {
+        return processedTokens as unknown[];
       } else {
-        contents.push({ type: "text", content: part });
+        contents.push(processedTokens);
+        return contents;
+      }
+    } catch (tokenizeError) {
+      console.error("[BetterCode] Tokenize error, falling back to simple highlighting:", tokenizeError);
+      // Fall back to Prism.highlight
+      try {
+        const res = Prism.highlight(text, grammar, lang) as any;
+        const contents: unknown[] = [];
+
+        if (typeof res === "string") {
+          contents.push({ type: "text", content: res });
+          return contents;
+        }
+
+        for (const part of res) {
+          if (typeof part === "object" && part !== null) {
+            const style = (part.alias ?? part.type) as string;
+            const content = part.content;
+
+            if (theme[style]) {
+              const color = theme[style];
+              contents.push({
+                content: [{ type: "text", content }],
+                target: "usernameOnClick",
+                context: {
+                  username: 1,
+                  usernameOnClick: {
+                    linkColor: processColor(color),
+                  },
+                  medium: true,
+                },
+                type: "link",
+              });
+            } else if (decorator[style]) {
+              contents.push({ type: decorator[style], content });
+            } else {
+              contents.push({ type: "text", content });
+            }
+          } else {
+            contents.push({ type: "text", content: part });
+          }
+        }
+
+        return contents;
+      } catch (highlightError) {
+        console.error("[BetterCode] Highlight error:", highlightError);
+        return [{ type: "text", content: text }];
       }
     }
-
-    return contents;
   } catch (error) {
     console.error("[BetterCode] highlightText error:", error);
     return [{ type: "text", content: text }];
