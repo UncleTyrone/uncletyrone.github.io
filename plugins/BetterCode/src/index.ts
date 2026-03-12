@@ -1,4 +1,4 @@
-// BetterCode plugin - Fixed version with enhanced error handling
+// BetterCode plugin - Fixed version with correct Vendetta patcher usage
 import { storage } from "@vendetta/plugin";
 import { before } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
@@ -216,88 +216,81 @@ function walkContent(content: any[]): [any[], any[]] {
   return [nodes, embeds];
 }
 
-export const onLoad = () => {
-  console.log("[BetterCode] Loading...");
-  storage.show_line_num ??= false;
-
-  try {
-    // Try to find DCDChatManager using findByProps instead
-    const DCDChatManager = findByProps("updateRows");
-    
-    if (!DCDChatManager) {
-      console.error("[BetterCode] DCDChatManager not found via findByProps");
-      
-      // Fallback to original method
-      const nativeModules = (ReactNative as any).NativeModules;
-      const fallbackManager = nativeModules?.DCDChatManager;
-      
-      if (!fallbackManager) {
-        console.error("[BetterCode] Fallback DCDChatManager also not found");
-        return;
-      }
-      
-      console.log("[BetterCode] Using fallback DCDChatManager");
-    }
-
-    const targetManager = DCDChatManager || (ReactNative as any).NativeModules?.DCDChatManager;
-    
-    console.log("[BetterCode] Target manager:", targetManager);
-    
-    if (!targetManager?.updateRows) {
-      console.error("[BetterCode] updateRows method not found");
-      return;
-    }
-
-    console.log("[BetterCode] updateRows:", targetManager.updateRows);
-    console.log("[BetterCode] Attempting to patch...");
+// BetterCode plugin main object
+export default {
+  onLoad: () => {
+    console.log("[BetterCode] Loading...");
+    storage.show_line_num ??= false;
 
     try {
-      unpatch = before(
-        targetManager,
-        "updateRows",
-        (args: [unknown, string]) => {
-          try {
-            const json = args[1];
-            if (typeof json !== "string") return;
+      const DCDChatManager = findByProps("updateRows");
+      
+      if (!DCDChatManager) {
+        console.error("[BetterCode] DCDChatManager not found");
+        return;
+      }
 
-            const rows = JSON.parse(json);
-            if (!Array.isArray(rows)) return;
+      console.log("[BetterCode] DCDChatManager found, patching...");
 
-            for (const row of rows) {
-              if (row?.message?.content && Array.isArray(row.message.content)) {
-                const [newContent, newEmbeds] = walkContent(row.message.content);
-                row.message.content = newContent;
-                if (row.message.embeds) {
-                  row.message.embeds.push(...newEmbeds);
-                } else {
-                  row.message.embeds = newEmbeds;
-                }
+      // Create the patch callback
+      const patchCallback = ((...args: [unknown, string]) => {
+        console.log("[BetterCode] Patch called with args:", args);
+        
+        if (args.length < 2) {
+          console.warn("[BetterCode] Expected 2 args, got:", args.length);
+          return;
+        }
+
+        const json = args[1];
+        if (typeof json !== "string") {
+          console.warn("[BetterCode] args[1] is not a string:", typeof json);
+          return;
+        }
+
+        try {
+          const rows = JSON.parse(json);
+          if (!Array.isArray(rows)) {
+            console.warn("[BetterCode] rows is not an array");
+            return;
+          }
+
+          for (const row of rows) {
+            if (row?.message?.content && Array.isArray(row.message.content)) {
+              const [newContent, newEmbeds] = walkContent(row.message.content);
+              row.message.content = newContent;
+              if (row.message.embeds) {
+                row.message.embeds.push(...newEmbeds);
+              } else {
+                row.message.embeds = newEmbeds;
               }
             }
-
-            args[1] = JSON.stringify(rows);
-          } catch (e) {
-            console.error("[BetterCode] updateRows error:", e);
           }
-        },
+
+          args[1] = JSON.stringify(rows);
+          console.log("[BetterCode] Successfully processed rows");
+        } catch (e) {
+          console.error("[BetterCode] Processing error:", e);
+        }
+      });
+
+      // Use correct order for Vendetta: before(obj, method, cb)
+      unpatch = before(
+        DCDChatManager,  // obj - the target object
+        "updateRows",    // method - the method name as string
+        patchCallback    // cb - the callback function
       );
       
-      console.log("[BetterCode] Plugin loaded successfully! Patching active.");
+      console.log("[BetterCode] Plugin loaded! Patching active. unpatch:", typeof unpatch);
     } catch (error) {
-      console.error("[BetterCode] Patching failed:", error);
-      // Don't block plugin load if patching fails
+      console.error("[BetterCode] onLoad error:", error);
     }
+  },
 
-    console.log("[BetterCode] Plugin loaded!");
-  } catch (error) {
-    console.error("[BetterCode] onLoad error:", error);
-  }
+  onUnload: () => {
+    console.log("[BetterCode] Unloading...");
+    unpatch?.();
+    console.log("[BetterCode] Plugin unloaded");
+  },
+
+  settings: Settings,
 };
-
-export const onUnload = () => {
-  console.log("[BetterCode] Unloading...");
-  unpatch?.();
-  console.log("[BetterCode] Plugin unloaded");
-};
-
-export const settings = Settings;
