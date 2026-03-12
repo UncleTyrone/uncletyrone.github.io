@@ -62,6 +62,4 @@ declare module "prismjs" {
     tokenize(code: string, grammar: any): any[];
     languages: Record<string, any>;
   };
-
-  export = Prism;
 }

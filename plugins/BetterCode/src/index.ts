@@ -5,7 +5,7 @@ import { storage } from "@vendetta/plugin";
 import { after } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
-const Prism = require("prismjs");
+import { Prism } from "prismjs";
 
 // Import all Prism language grammars
 import "prismjs/components/prism-javascript";
