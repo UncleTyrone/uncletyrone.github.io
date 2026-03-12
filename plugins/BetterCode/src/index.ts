@@ -1,6 +1,6 @@
 // BetterCode plugin - Fixed version with correct Vendetta patcher usage
 import { storage } from "@vendetta/plugin";
-import { before, instead } from "@vendetta/patcher";
+import { instead } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
 import Prism from "prismjs";
@@ -231,24 +231,24 @@ export default {
       }
 
       console.log("[BetterCode] DCDChatManager found");
-      console.log("[BetterCode] updateRows:", DCDChatManager.updateRows);
 
+      // Use the correct signature: (funcName, parent, callback)
       unpatch = instead(
-        DCDChatManager,
-        "updateRows",
-        ((...args: unknown[]) => {
-          console.log("[BetterCode] instead() callback called with args:", args);
+        "updateRows",     // funcName - the method name as string
+        DCDChatManager,   // parent - the parent object
+        ((args: unknown[], origFunc: Function) => {
+          console.log("[BetterCode] instead() called with args:", args);
           
           if (args.length < 2 || typeof args[1] !== "string") {
             console.warn("[BetterCode] args[1] not string, passing through");
-            return args; // Pass through original args
+            return;
           }
 
           try {
             const rows = JSON.parse(args[1]);
             if (!Array.isArray(rows)) {
               console.warn("[BetterCode] rows is not an array");
-              return args;
+              return;
             }
 
             for (const row of rows) {
@@ -264,11 +264,9 @@ export default {
             }
 
             args[1] = JSON.stringify(rows);
-            console.log("[BetterCode] Successfully processed rows with instead()");
-            return args;
+            console.log("[BetterCode] Successfully processed rows");
           } catch (e) {
             console.error("[BetterCode] Processing error:", e);
-            return args;
           }
         }) as any
       );

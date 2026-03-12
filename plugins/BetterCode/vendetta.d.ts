@@ -5,21 +5,21 @@ declare module "@vendetta/plugin" {
 
 declare module "@vendetta/patcher" {
   export function before<T extends unknown[]>(
-    obj: unknown, 
-    method: string, 
-    cb: (...args: T) => void
+    func: string, 
+    parent: any, 
+    cb: (args: T, ret?: any) => void | unknown | unknown[]
   ): () => void;
   
   export function after<T extends unknown[]>(
-    obj: unknown, 
-    method: string, 
-    cb: (...args: T) => void
+    func: string, 
+    parent: any, 
+    cb: (args: T, ret: any) => void | unknown | unknown[]
   ): () => void;
   
   export function instead<T extends unknown[]>(
-    obj: unknown, 
-    method: string, 
-    cb: (...args: T) => void
+    func: string, 
+    parent: any, 
+    cb: (args: T, origFunc: Function) => void | unknown | unknown[]
   ): () => void;
 }
 
