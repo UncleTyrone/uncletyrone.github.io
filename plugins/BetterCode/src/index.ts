@@ -1,4 +1,4 @@
-// BetterCode plugin - Fixed version with error handling
+// BetterCode plugin - Fixed version with enhanced error handling
 import { storage } from "@vendetta/plugin";
 import { before } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
@@ -229,42 +229,66 @@ export const onLoad = () => {
       return;
     }
 
-    if (typeof DCDChatManager.updateRows !== "function") {
-      console.error("[BetterCode] DCDChatManager.updateRows is not a function");
+    console.log("[BetterCode] DCDChatManager found:", DCDChatManager);
+    console.log("[BetterCode] updateRows method:", DCDChatManager.updateRows);
+    
+    // Check if updateRows is actually callable
+    const updateRowsType = typeof DCDChatManager.updateRows;
+    console.log("[BetterCode] updateRows type:", updateRowsType);
+    
+    if (updateRowsType !== "function") {
+      console.error("[BetterCode] DCDChatManager.updateRows is not a function, it's:", updateRowsType);
       return;
     }
 
-    console.log("[BetterCode] DCDChatManager found, patching...");
+    console.log("[BetterCode] Attempting to patch DCDChatManager.updateRows...");
 
-    unpatch = before(
-      DCDChatManager,
-      "updateRows",
-      (args: [unknown, string]) => {
-        try {
-          const json = args[1];
-          if (typeof json !== "string") return;
+    try {
+      unpatch = before(
+        DCDChatManager,
+        "updateRows",
+        (args: [unknown, string]) => {
+          console.log("[BetterCode] updateRows called with args:", args, "types:", typeof args, typeof args[0], typeof args[1]);
+          
+          try {
+            const json = args[1];
+            if (typeof json !== "string") {
+              console.warn("[BetterCode] args[1] is not a string:", typeof json);
+              return;
+            }
 
-          const rows = JSON.parse(json);
-          if (!Array.isArray(rows)) return;
+            const rows = JSON.parse(json);
+            if (!Array.isArray(rows)) {
+              console.warn("[BetterCode] Parsed rows is not an array:", rows);
+              return;
+            }
 
-          for (const row of rows) {
-            if (row?.message?.content && Array.isArray(row.message.content)) {
-              const [newContent, newEmbeds] = walkContent(row.message.content);
-              row.message.content = newContent;
-              if (row.message.embeds) {
-                row.message.embeds.push(...newEmbeds);
-              } else {
-                row.message.embeds = newEmbeds;
+            for (const row of rows) {
+              if (row?.message?.content && Array.isArray(row.message.content)) {
+                console.log("[BetterCode] Processing code blocks in message");
+                const [newContent, newEmbeds] = walkContent(row.message.content);
+                row.message.content = newContent;
+                if (row.message.embeds) {
+                  row.message.embeds.push(...newEmbeds);
+                } else {
+                  row.message.embeds = newEmbeds;
+                }
               }
             }
-          }
 
-          args[1] = JSON.stringify(rows);
-        } catch (e) {
-          console.error("[BetterCode] updateRows error:", e);
-        }
-      },
-    );
+            args[1] = JSON.stringify(rows);
+            console.log("[BetterCode] Successfully processed rows");
+          } catch (e) {
+            console.error("[BetterCode] updateRows processing error:", e);
+          }
+        },
+      );
+      
+      console.log("[BetterCode] Patching successful! unpatch function:", typeof unpatch);
+    } catch (patchError) {
+      console.error("[BetterCode] Patching failed with error:", patchError);
+      // Don't return here, let the plugin continue
+    }
 
     console.log("[BetterCode] Plugin loaded successfully!");
   } catch (error) {
