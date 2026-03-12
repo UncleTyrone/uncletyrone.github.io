@@ -107,7 +107,7 @@ console.log("[BetterCode] Prism loaded, languages:", Object.keys(Prism.languages
 
 function highlightText(text: string, lang: string): unknown[] {
   try {
-    if (storage.show_line_num === true) {
+    if (storage.show_line_num === true && typeof text === "string") {
       text = text
         .split("\n")
         .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
@@ -118,6 +118,12 @@ function highlightText(text: string, lang: string): unknown[] {
     const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
     if (!grammar) {
       console.warn(`[BetterCode] No grammar found for language: ${lang}`);
+      return [{ type: "text", content: text }];
+    }
+
+    // Check if Prism has the tokenize method
+    if (!grammar || typeof Prism.tokenize !== "function") {
+      console.warn("[BetterCode] Prism.tokenize not available");
       return [{ type: "text", content: text }];
     }
 
@@ -176,48 +182,50 @@ function walkContent(content: any[]): [any[], any[]] {
       embeds.push(...nestedEmbeds);
     }
 
-    if (
-      obj.type === "codeBlock" &&
-      obj.lang &&
-      (Prism.languages[obj.lang] ?? Prism.languages[langList[obj.lang]?.[0]?.toLowerCase()])
-    ) {
-      try {
-        const langMeta =
-          obj.lang in langList && langList[obj.lang][1]
-            ? langList[obj.lang][0]
-            : obj.lang;
-        const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
+    if (obj.type === "codeBlock" && obj.lang) {
+      // Get the lowercase language for checking
+      const langLower = obj.lang.toLowerCase();
+      
+      // Check if Prism has this language (try direct, then mapped)
+      const targetLang = langList[langLower]?.[0] || langList[obj.lang]?.[0] || langLower;
+      const grammar = Prism.languages[targetLang] || Prism.languages[langLower];
+      
+      if (grammar) {
+        try {
+          const langMeta = langList[langLower]?.[0] || obj.lang;
+          const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
-        const rawContent: any[] = [
-          {
-            content: highlightText(obj.content, obj.lang),
-            type: "paragraph",
-          },
-          {
-            content: "-- BetterCode",
-            type: "text",
-          },
-        ];
+          const rawContent: any[] = [
+            {
+              content: highlightText(obj.content, targetLang),
+              type: "paragraph",
+            },
+            {
+              content: "-- BetterCode",
+              type: "text",
+            },
+          ];
 
-        const embed = {
-          type: "rich",
-          description: rawContent,
-          author: {
-            name: langMeta,
-            iconURL,
-            iconProxyURL: iconURL,
-          },
-          borderLeftColor: processColor("#e0e0ff"),
-          providerColor: processColor("#e0e0ff"),
-          headerTextColor: 0xffffffff,
-          bodyTextColor: 0xffe0e0ff,
-        };
+          const embed = {
+            type: "rich" as const,
+            description: rawContent,
+            author: {
+              name: langMeta,
+              iconURL,
+              iconProxyURL: iconURL,
+            },
+            borderLeftColor: processColor("#e0e0ff"),
+            providerColor: processColor("#e0e0ff"),
+            headerTextColor: 0xffffffff,
+            bodyTextColor: 0xffe0e0ff,
+          };
 
-        embeds.push(embed);
-        obj.type = "text";
-        obj.content = "";
-      } catch (error) {
-        console.error("[BetterCode] Code block processing error:", error);
+          embeds.push(embed);
+          obj.type = "text";
+          obj.content = "";
+        } catch (error) {
+          console.error("[BetterCode] Code block processing error:", error);
+        }
       }
     }
   }
