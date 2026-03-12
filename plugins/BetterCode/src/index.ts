@@ -35,6 +35,8 @@ try {
   console.warn("[BetterCode] Settings failed to load:", e);
 }
 
+/*
+
 type Message = {
   content: any[];
   embeds?: any[];
@@ -43,6 +45,10 @@ type Message = {
 type Row = {
   message: Message;
 };
+
+*/
+
+const HASH = Symbol("bettercodeHash");
 
 // Safety check for processColor
 const processColor: (color: string) => number =
@@ -108,6 +114,8 @@ const langList: Record<string, [string, boolean]> = {
 const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 
 let unpatch: (() => void) | undefined;
+let unpatch2: (() => void) | undefined;
+let unpatch3: (() => void) | undefined;
 
 // Check if Prism is loaded properly
 console.log("[BetterCode] Prism loaded:", !!Prism?.languages);
@@ -132,7 +140,7 @@ function highlightText(text: string, lang: string): unknown[] {
     }
 
     // Get the grammar - first check direct language, then mapped language
-    const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()?.replace(" ", "")];
+    const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
     if (!grammar) {
       console.warn(`[BetterCode] No grammar found for language: ${lang}`);
       return [{ type: "text", content: text }];
@@ -268,7 +276,7 @@ function walkContent(content: any[]): [any[], any[]] {
 
           embeds.push(embed);
           obj.type = "text";
-          obj.content = "";
+          obj.content = " ";
         } catch (error) {
           console.error("[BetterCode] Code block processing error:", error);
         }
@@ -299,55 +307,127 @@ export default {
 
       */
 
-      const MessageParser = findByProps("parse", "parseTopic") ?? findByProps("parse") ?? findByProps("parseMessage");
-      console.log("[BetterCode] MessageParser module:", MessageParser);
-      console.log("[BetterCode] parse:", MessageParser?.parse);
+      function containsCodeBlock(content: any[]): boolean {
+        for (const node of content) {
+          if (!node) continue;
 
-      if (!MessageParser) {
-        console.error("[BetterCode] MessageParser not found");
-        return;
-      }
-
-      if (!MessageParser || typeof MessageParser.parse !== "function") {
-        console.error("[BetterCode] MessageParser invalid:", MessageParser);
-        return;
-      }
-
-      console.log("[BetterCode] MessageParser found");
-
-      const target = MessageParser?.default ?? MessageParser;
-
-      unpatch = after("parse", target, (args: any[], res: any) => {
-        console.log("[BetterCode] Parser patch called");
-
-        try {
-          if (!Array.isArray(res) && !Array.isArray(res?.content)) return res;
-
-          const parsed = Array.isArray(res) ? res : res.content;
-          const [newContent, newEmbeds] = walkContent(parsed);
-
-          if (newEmbeds.length) {
-            const message = args?.[0];
-            if (message) {
-              message.embeds = [...(message.embeds ?? []), ...newEmbeds];
-              console.log("[BetterCode] New embeds added:", newEmbeds.length);
-            } else {
-              console.warn("[BetterCode] Message object not found in args");
-            }
+          if (["codeBlock","code","pre"].includes(node.type)) {
+            return true;
           }
 
-          if (!Array.isArray(res)) {
-            res.content = newContent;
-            return res;
+          if (Array.isArray(node.content) && containsCodeBlock(node.content)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      const MessageStore = findByProps("receiveMessage", "getMessage")
+      console.log("[BetterCode] MessageStore module:", MessageStore);
+
+      if (!MessageStore) {
+        console.error("[BetterCode] MessageStore not found");
+        return;
+      }
+
+      console.log("[BetterCode] MessageStore found");
+
+      unpatch = after("receiveMessage", MessageStore, (_, message) => {
+        console.log("[BetterCode] ReceiveMessage parser patch called");
+
+        try {
+          if (!message?.content) return;
+
+          if (!Array.isArray(message.content)) return;
+
+          if (!containsCodeBlock(message.content)) return;
+
+          const contentHash = JSON.stringify(message.content);
+          if (message[HASH] === contentHash) return;
+          message[HASH] = contentHash;
+
+          const [newContent, newEmbeds] = walkContent(message.content);
+
+          message.content = newContent;
+
+          if (newEmbeds.length) {
+              message.embeds = [...(message.embeds ?? []), ...newEmbeds];
+              console.log("[BetterCode] New embeds added:", newEmbeds.length);
           }
 
           console.log("[BetterCode] Row parsed successfully");
-          return newContent;
         } catch (error) {
-          console.error("[BetterCode] Message parsing error:", error);
-          return res;
+          console.error("[BetterCode] ReceiveMessage parsing error:", error);
         }
       })
+
+      unpatch2 = after("updateMessage", MessageStore, (_, message) => {
+        console.log("[BetterCode] UpdateMessage parser patch called");
+        
+        try {
+          if (!message?.content) return;
+
+          if (!Array.isArray(message.content)) return;
+
+          if (!containsCodeBlock(message.content)) return;
+
+          const contentHash = JSON.stringify(message.content);
+          if (message[HASH] === contentHash) return;
+          message[HASH] = contentHash;
+
+          const [newContent, newEmbeds] = walkContent(message.content);
+
+          message.content = newContent;
+
+          if (newEmbeds.length) {
+            message.embeds = [...(message.embeds ?? []), ...newEmbeds];
+            console.log("[BetterCode] New embeds added:", newEmbeds.length);
+          }
+
+          console.log("[BetterCode] Row parsed successfully");
+        } catch (error) {
+          console.error("[BetterCode] UpdateMessage parsing error:", error);
+        }
+      });
+
+      unpatch3 = after("loadMessages", MessageStore, (_, data) => {
+        console.log("[BetterCode] LoadMessages parser patch called");
+        
+        try {
+          const messages = data?.messages;
+          if (!Array.isArray(messages)) return;
+
+          for (const message of messages) {
+            try {
+              if (!Array.isArray(message?.content)) continue;
+
+              if (!containsCodeBlock(message.content)) continue;
+
+              const contentHash = JSON.stringify(message.content);
+              if (message[HASH] === contentHash) continue;
+              message[HASH] = contentHash;
+
+              const [newContent, newEmbeds] = walkContent(message.content);
+
+              message.content = newContent;
+
+              if (newEmbeds.length) {
+                message.embeds = [...(message.embeds ?? []), ...newEmbeds];
+                console.log("[BetterCode] New embeds added:", newEmbeds.length);
+              }
+
+              console.log("[BetterCode] Row parsed successfully");
+            } catch (error) {
+              console.error("[BetterCode] LoadMessages message parsing error:", error);
+            }
+          }
+
+          console.log("[BetterCode] LoadMessages history parsed:", messages.length);
+        } catch (error) {
+          console.error("[BetterCode] LoadMessages parsing error:", error);
+        }
+      });
       
       /*
       
@@ -388,7 +468,9 @@ export default {
 
       */
 
-      console.log("[BetterCode] Plugin loaded! Patching active. unpatch:", typeof unpatch);
+      console.log("[BetterCode] Plugin loaded! ReceiveMessage patching active. unpatch:", typeof unpatch);
+      console.log("[BetterCode] Plugin loaded! UpdateMessage patching active. unpatch2:", typeof unpatch2);
+      console.log("[BetterCode] Plugin loaded! LoadMessages patching active. unpatch3:", typeof unpatch3);
     } catch (error) {
       console.error("[BetterCode] onLoad error:", error);
     }
@@ -397,6 +479,8 @@ export default {
   onUnload: () => {
     console.log("[BetterCode] Unloading...");
     unpatch?.();
+    unpatch2?.();
+    unpatch3?.();
     console.log("[BetterCode] Plugin unloaded");
   },
 
