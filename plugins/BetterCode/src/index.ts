@@ -183,21 +183,18 @@ function walkContent(content: any[]): [any[], any[]] {
     }
 
     if (obj.type === "codeBlock" && obj.lang) {
-      // Get the lowercase language for checking
+      // Normalize language to lowercase for lookup
       const langLower = obj.lang.toLowerCase();
       
-      // Check if Prism has this language (try direct, then mapped)
-      const targetLang = langList[langLower]?.[0] || langList[obj.lang]?.[0] || langLower;
-      const grammar = Prism.languages[targetLang] || Prism.languages[langLower];
-      
-      if (grammar) {
+      // First check if we have this language directly in Prism
+      if (Prism.languages[langLower]) {
         try {
           const langMeta = langList[langLower]?.[0] || obj.lang;
           const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
           const rawContent: any[] = [
             {
-              content: highlightText(obj.content, targetLang),
+              content: highlightText(obj.content, langLower),
               type: "paragraph",
             },
             {
@@ -225,6 +222,47 @@ function walkContent(content: any[]): [any[], any[]] {
           obj.content = "";
         } catch (error) {
           console.error("[BetterCode] Code block processing error:", error);
+        }
+      } 
+      // Then check mapped languages
+      else if (langList[langLower]) {
+        const targetLang = langList[langLower][0].toLowerCase();
+        if (Prism.languages[targetLang]) {
+          try {
+            const langMeta = langList[langLower][0];
+            const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
+
+            const rawContent: any[] = [
+              {
+                content: highlightText(obj.content, targetLang),
+                type: "paragraph",
+              },
+              {
+                content: "-- BetterCode",
+                type: "text",
+              },
+            ];
+
+            const embed = {
+              type: "rich" as const,
+              description: rawContent,
+              author: {
+                name: langMeta,
+                iconURL,
+                iconProxyURL: iconURL,
+              },
+              borderLeftColor: processColor("#e0e0ff"),
+              providerColor: processColor("#e0e0ff"),
+              headerTextColor: 0xffffffff,
+              bodyTextColor: 0xffe0e0ff,
+            };
+
+            embeds.push(embed);
+            obj.type = "text";
+            obj.content = "";
+          } catch (error) {
+            console.error("[BetterCode] Code block processing error:", error);
+          }
         }
       }
     }
