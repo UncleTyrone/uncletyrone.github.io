@@ -1,9 +1,11 @@
+/// <reference path="../vendetta.d.ts" />
+
 // BetterCode plugin - Fixed version with correct Vendetta patcher usage
 import { storage } from "@vendetta/plugin";
-import { before } from "@vendetta/patcher";
+import { after } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
-import Prism from "prismjs";
+const Prism = require("prismjs");
 
 // Import all Prism language grammars
 import "prismjs/components/prism-javascript";
@@ -26,7 +28,12 @@ import "prismjs/components/prism-kotlin";
 import "prismjs/components/prism-objectivec";
 
 // Import settings
-import Settings from "./Settings";
+let Settings: any;
+try {
+  Settings = require("./Settings").default ?? require("./Settings");
+} catch (e) {
+  console.warn("[BetterCode] Settings failed to load:", e);
+}
 
 type Message = {
   content: any[];
@@ -103,9 +110,19 @@ const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 let unpatch: (() => void) | undefined;
 
 // Check if Prism is loaded properly
-console.log("[BetterCode] Prism loaded, languages:", Object.keys(Prism.languages));
+console.log("[BetterCode] Prism loaded:", !!Prism?.languages);
 
 function highlightText(text: string, lang: string): unknown[] {
+  if (text.length > 8000) {
+    console.warn("[BetterCode] Code block too large, skipping highlight");
+    return [{ type: "text", content: text }];
+  }
+
+  if (!Prism?.languages) {
+    console.warn("[BetterCode] Prism not ready");
+    return [{ type: "text", content: text }];
+  }
+
   try {
     if (storage.show_line_num === true && typeof text === "string") {
       text = text
@@ -115,7 +132,7 @@ function highlightText(text: string, lang: string): unknown[] {
     }
 
     // Get the grammar - first check direct language, then mapped language
-    const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
+    const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()?.replace(" ", "")];
     if (!grammar) {
       console.warn(`[BetterCode] No grammar found for language: ${lang}`);
       return [{ type: "text", content: text }];
@@ -131,7 +148,7 @@ function highlightText(text: string, lang: string): unknown[] {
         if (typeof token === "string") {
           return { type: "text", content: token };
         } else if (Array.isArray(token)) {
-          return token.map(processToken);
+          return ([] as any[]).concat(...token.map(processToken));
         } else if (token && typeof token === "object") {
           if (token.content && typeof token.content !== "string") {
             return {
@@ -143,19 +160,7 @@ function highlightText(text: string, lang: string): unknown[] {
           const style = (token.alias ?? token.type) as string;
           
           if (theme[style]) {
-            const color = theme[style];
-            return {
-              content: [{ type: "text", content: token.content }],
-              target: "usernameOnClick",
-              context: {
-                username: 1,
-                usernameOnClick: {
-                  linkColor: processColor(color),
-                },
-                medium: true,
-              },
-              type: "link",
-            };
+             return { type: "text", content: token.content };
           } else if (decorator[style]) {
             return { type: decorator[style], content: token.content };
           } else {
@@ -190,19 +195,7 @@ function highlightText(text: string, lang: string): unknown[] {
             const content = part.content;
 
             if (theme[style]) {
-              const color = theme[style];
-              contents.push({
-                content: [{ type: "text", content }],
-                target: "usernameOnClick",
-                context: {
-                  username: 1,
-                  usernameOnClick: {
-                    linkColor: processColor(color),
-                  },
-                  medium: true,
-                },
-                type: "link",
-              });
+              contents.push({ type: "text", content });
             } else if (decorator[style]) {
               contents.push({ type: decorator[style], content });
             } else {
@@ -228,18 +221,18 @@ function highlightText(text: string, lang: string): unknown[] {
 // src/index.ts
 function walkContent(content: any[]): [any[], any[]] {
   const embeds: any[] = [];
-  const nodes = content;
+  const nodes = Array.isArray(content) ? [...content] : [];
 
   for (const obj of nodes) {
     // Recursively process nested content
-    if (typeof obj.content === "object" && Array.isArray(obj.content)) {
+    if (obj && Array.isArray(obj.content)) {
       const [nestedContent, nestedEmbeds] = walkContent(obj.content);
       obj.content = nestedContent;
       embeds.push(...nestedEmbeds);
     }
 
     // Handle code blocks
-    if (obj.type === "codeBlock" && obj.lang) {
+    if (obj && ["codeBlock","code","pre"].includes(obj.type) && obj.lang) {
       const langLower = obj.lang.toLowerCase();
 
       // Check if Prism supports this language (direct or mapped)
@@ -254,18 +247,14 @@ function walkContent(content: any[]): [any[], any[]] {
 
           const rawContent: any[] = [
             {
-              content: highlightText(obj.content, langLower),
               type: "paragraph",
-            },
-            {
-              content: "-- BetterCode",
-              type: "text",
-            },
+              content: highlightText(typeof obj.content === "string" ? obj.content : String(obj.content ?? ""), langLower)
+            }
           ];
 
           const embed = {
-            type: 0, // numeric rich embed type
-            content: rawContent, // use `content` instead of `description`
+            type: 0,
+            description: rawContent,
             author: {
               name: langMeta,
               iconURL,
@@ -296,6 +285,9 @@ export default {
     storage.show_line_num ??= false;
 
     try {
+
+      /*
+
       const DCDChatManager = findByProps("updateRows");
       
       if (!DCDChatManager) {
@@ -305,36 +297,93 @@ export default {
 
       console.log("[BetterCode] DCDChatManager found");
 
-      // Use correct signature: instead(funcName, parent, callback)
-      // Use before patcher to modify args before function executes
-            // Use before patcher to modify args before function executes
-            // Use before patcher to modify args before function executes
+      */
+
+      const MessageParser = findByProps("parse", "parseTopic") ?? findByProps("parse");
+
+      if (!MessageParser) {
+        console.error("[BetterCode] MessageParser not found");
+        return;
+      }
+
+      if (!MessageParser || typeof MessageParser.parse !== "function") {
+        console.error("[BetterCode] MessageParser invalid:", MessageParser);
+        return;
+      }
+
+      console.log("[BetterCode] MessageParser found");
+
+      unpatch = after("parse", MessageParser, (args: any[], res: any) => {
+        console.log("[BetterCode] Parser patch called");
+
+        try {
+          if (!Array.isArray(res) && !Array.isArray(res?.content)) return res;
+
+          const parsed = Array.isArray(res) ? res : res.content;
+          const [newContent, newEmbeds] = walkContent(parsed);
+
+          if (newEmbeds.length) {
+            const message = args?.[0];
+            if (message) {
+              message.embeds = [...(message.embeds ?? []), ...newEmbeds];
+              console.log("[BetterCode] New embeds added:", newEmbeds.length);
+            } else {
+              console.warn("[BetterCode] Message object not found in args");
+            }
+          }
+
+          if (!Array.isArray(res)) {
+            res.content = newContent;
+            return res;
+          }
+
+          console.log("[BetterCode] Row parsed successfully");
+          return newContent;
+        } catch (error) {
+          console.error("[BetterCode] Message parsing error:", error);
+          return res;
+        }
+      })
+      
+      /*
+      
       unpatch = before(
         "updateRows",
         DCDChatManager,
-        ((args: [unknown, { rows: any[], isLoadingAtTop?: boolean }]) => {
+        (args: any[]) => {
           console.log("[BetterCode] before() called");
           
-          if (!args[1] || !Array.isArray(args[1].rows)) {
+          const data = args[0];
+
+          if (!data || !Array.isArray(data.rows)) {
             console.warn("[BetterCode] Invalid args format");
-            return args; // Return original args if invalid
+            return;
           }
 
-          const rows = args[1].rows;
+          const rows = data.rows;
 
           for (const row of rows) {
             if (row?.message?.content && Array.isArray(row.message.content)) {
               const [newContent, newEmbeds] = walkContent(row.message.content);
+              
               row.message.content = newContent;
-              row.message.embeds ? row.message.embeds.push(...newEmbeds) : row.message.embeds = newEmbeds;
+
+              if (row.message.embeds) {
+                row.message.embeds.push(...newEmbeds);
+              } else {
+                row.message.embeds = newEmbeds;
+              }
+
+              console.log("[BetterCode] Processed a row, new embeds added:", newEmbeds.length);
             }
           }
 
           console.log("[BetterCode] Successfully processed rows");
-          return args; // Explicitly return modified args
         }) as any
       );
-      
+
+      */
+
       console.log("[BetterCode] Plugin loaded! Patching active. unpatch:", typeof unpatch);
     } catch (error) {
       console.error("[BetterCode] onLoad error:", error);
