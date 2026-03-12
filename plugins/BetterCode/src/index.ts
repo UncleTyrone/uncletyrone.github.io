@@ -225,22 +225,29 @@ function highlightText(text: string, lang: string): unknown[] {
   }
 }
 
+// src/index.ts
 function walkContent(content: any[]): [any[], any[]] {
   const embeds: any[] = [];
   const nodes = content;
 
   for (const obj of nodes) {
+    // Recursively process nested content
     if (typeof obj.content === "object" && Array.isArray(obj.content)) {
       const [nestedContent, nestedEmbeds] = walkContent(obj.content);
       obj.content = nestedContent;
       embeds.push(...nestedEmbeds);
     }
 
+    // Handle code blocks
     if (obj.type === "codeBlock" && obj.lang) {
       const langLower = obj.lang.toLowerCase();
-      
-      // Check if Prism supports this language
-      if (Prism.languages[langLower] || Prism.languages[langList[langLower]?.[0]?.toLowerCase()]) {
+
+      // Check if Prism supports this language (direct or mapped)
+      const supported =
+        Prism.languages[langLower] ||
+        Prism.languages[langList[langLower]?.[0]?.toLowerCase()];
+
+      if (supported) {
         try {
           const langMeta = langList[langLower]?.[0] || obj.lang;
           const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
@@ -257,11 +264,11 @@ function walkContent(content: any[]): [any[], any[]] {
           ];
 
           const embed = {
-            type: "rich",
-            description: rawContent,
+            type: 0, // numeric rich embed type
+            content: rawContent, // use `content` instead of `description`
             author: {
               name: langMeta,
-              iconURL: iconURL,
+              iconURL,
               iconProxyURL: iconURL,
             },
             borderLeftColor: processColor("#e0e0ff"),
