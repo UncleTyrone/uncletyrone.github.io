@@ -1,5 +1,5 @@
 {
-  "name": "https://uncletyrone.github.io/",
+  "name": "uncletyrone.github.io",
   "version": "0.1.0",
   "private": true,
   "homepage": "https://uncletyrone.github.io/",
@@ -13,6 +13,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.2.4",
     "react-scripts": "5.0.1",
+    "typescript": "^5.9.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -36,7 +37,10 @@
     ],
     "overrides": [
       {
-        "files": ["plugins/**/*.ts", "plugins/**/*.tsx"],
+        "files": [
+          "plugins/**/*.ts",
+          "plugins/**/*.tsx"
+        ],
         "rules": {
           "import/no-unresolved": "off"
         }
@@ -61,7 +65,7 @@
     "@swc/core": "^1.9.3",
     "esbuild": "^0.16.17",
     "gh-pages": "^6.3.0",
-    "prismjs": "^1.29.0",
+    "prismjs": "^1.30.0",
     "rollup": "^3.29.5",
     "rollup-plugin-esbuild": "^5.0.0",
     "vendetta-types": "latest",

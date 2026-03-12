@@ -1,13 +1,12 @@
-// bunny-plugin-EXAMPLE/src/index.tsx
-
+// BetterCode plugin - Fixed version with error handling
 import { storage } from "@vendetta/plugin";
 import { before } from "@vendetta/patcher";
 import { ReactNative } from "@vendetta/metro/common";
 import Prism from "prismjs";
 
+// Import all Prism language grammars
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-typescript";
-
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-c";
@@ -19,21 +18,21 @@ import "prismjs/components/prism-perl";
 import "prismjs/components/prism-ruby";
 import "prismjs/components/prism-php";
 import "prismjs/components/prism-java";
-
 import "prismjs/components/prism-jsx";
 import "prismjs/components/prism-tsx";
-
 import "prismjs/components/prism-lua";
 import "prismjs/components/prism-kotlin";
 import "prismjs/components/prism-objectivec";
 
+// Import settings
 import Settings from "./Settings";
 
+// Safety check for processColor
 const processColor: (color: string) => number =
   ReactNative.processColor?.bind(ReactNative) ??
   ((_: string) => 0);
 
-// Prism theme (from original HighlightCode)
+// Prism theme
 const theme: Record<string, string> = {
   punctuation: "#959da5",
   "class-name": "#fb8532",
@@ -89,71 +88,71 @@ const langList: Record<string, [string, boolean]> = {
   objectivec: ["Objective-C", false],
 };
 
-const LOGOS_BASE =
-  "https://uncletyrone.github.io/plugins/BetterCode/logos";
+const LOGOS_BASE = "https://uncletyrone.github.io/plugins/BetterCode/logos";
 
 let unpatch: (() => void) | undefined;
 
-// ---- highlighting + embed logic (from HighlightCode) ------------------------
+// Check if Prism is loaded properly
+console.log("[BetterCode] Prism loaded, languages:", Object.keys(Prism.languages));
 
 function highlightText(text: string, lang: string): unknown[] {
-  if (storage.show_line_num === true) {
-    text = text
-      .split("\n")
-      .map(
-        (code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`,
-      )
-      .join("\n");
-  }
+  try {
+    if (storage.show_line_num === true) {
+      text = text
+        .split("\n")
+        .map((code, idx) => `${(idx + 1).toString().padStart(3)}  ${code}`)
+        .join("\n");
+    }
 
-  // Use Prism.highlight like original HighlightCode
-  const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
-  if (!grammar) {
+    // Get the grammar - first check direct language, then mapped language
+    const grammar = Prism.languages[lang] ?? Prism.languages[langList[lang]?.[0]?.toLowerCase()];
+    if (!grammar) {
+      console.warn(`[BetterCode] No grammar found for language: ${lang}`);
+      return [{ type: "text", content: text }];
+    }
+
+    const res = Prism.highlight(text, grammar, lang) as any;
+    const contents: unknown[] = [];
+
+    if (typeof res === "string") {
+      contents.push({ type: "text", content: res });
+      return contents;
+    }
+
+    for (const part of res) {
+      if (typeof part === "object" && part !== null) {
+        const style = (part.alias ?? part.type) as string;
+        const content = part.content;
+
+        if (theme[style]) {
+          const color = theme[style];
+          contents.push({
+            content: [{ type: "text", content }],
+            target: "usernameOnClick",
+            context: {
+              username: 1,
+              usernameOnClick: {
+                linkColor: processColor(color),
+              },
+              medium: true,
+            },
+            type: "link",
+          });
+        } else if (decorator[style]) {
+          contents.push({ type: decorator[style], content });
+        } else {
+          contents.push({ type: "text", content });
+        }
+      } else {
+        contents.push({ type: "text", content: part });
+      }
+    }
+
+    return contents;
+  } catch (error) {
+    console.error("[BetterCode] highlightText error:", error);
     return [{ type: "text", content: text }];
   }
-
-  const res = Prism.highlight(text, grammar, lang) as any;
-
-  const contents: unknown[] = [];
-
-  // In Prism 1.x, highlight returns a string; in the original plugin
-  // the custom Prism build returned a token array. We mirror their
-  // object-vs-string handling but fall back to plain text if needed.
-  if (typeof res === "string") {
-    contents.push({ type: "text", content: res });
-    return contents;
-  }
-
-  for (const part of res) {
-    if (typeof part === "object" && part !== null) {
-      const style = (part.alias ?? part.type) as string;
-      const content = part.content;
-
-      if (theme[style]) {
-        const color = theme[style];
-        contents.push({
-          content: [{ type: "text", content }],
-          target: "usernameOnClick",
-          context: {
-            username: 1,
-            usernameOnClick: {
-              linkColor: processColor(color),
-            },
-            medium: true,
-          },
-          type: "link",
-        });
-      } else if (decorator[style]) {
-        contents.push({ type: decorator[style], content });
-      } else {
-        contents.push({ type: "text", content });
-      }
-    } else {
-      contents.push({ type: "text", content: part });
-    }
-  }
-
-  return contents;
 }
 
 function walkContent(content: any[]): [any[], any[]] {
@@ -172,95 +171,111 @@ function walkContent(content: any[]): [any[], any[]] {
       obj.lang &&
       (Prism.languages[obj.lang] ?? Prism.languages[langList[obj.lang]?.[0]?.toLowerCase()])
     ) {
-      const langMeta =
-        obj.lang in langList && langList[obj.lang][1]
-          ? langList[obj.lang][0]
-          : obj.lang;
-      const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
+      try {
+        const langMeta =
+          obj.lang in langList && langList[obj.lang][1]
+            ? langList[obj.lang][0]
+            : obj.lang;
+        const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
-      const rawContent: any[] = [
-        {
-          content: highlightText(obj.content, obj.lang),
-          type: "paragraph",
-        },
-        {
-          content: "-- BetterCode",
-          type: "text",
-        },
-      ];
+        const rawContent: any[] = [
+          {
+            content: highlightText(obj.content, obj.lang),
+            type: "paragraph",
+          },
+          {
+            content: "-- BetterCode",
+            type: "text",
+          },
+        ];
 
-      const embed = {
-        type: "rich",
-        description: rawContent,
-        author: {
-          name: langMeta,
-          iconURL,
-          iconProxyURL: iconURL,
-        },
-        borderLeftColor: processColor("#e0e0ff"),
-        providerColor: processColor("#e0e0ff"),
-        headerTextColor: 0xffffffff,
-        bodyTextColor: 0xffe0e0ff,
-      };
+        const embed = {
+          type: "rich",
+          description: rawContent,
+          author: {
+            name: langMeta,
+            iconURL,
+            iconProxyURL: iconURL,
+          },
+          borderLeftColor: processColor("#e0e0ff"),
+          providerColor: processColor("#e0e0ff"),
+          headerTextColor: 0xffffffff,
+          bodyTextColor: 0xffe0e0ff,
+        };
 
-      embeds.push(embed);
-      obj.type = "text";
-      obj.content = "";
+        embeds.push(embed);
+        obj.type = "text";
+        obj.content = "";
+      } catch (error) {
+        console.error("[BetterCode] Code block processing error:", error);
+      }
     }
   }
 
   return [nodes, embeds];
 }
 
-// ---- Vendetta/Bunny plugin exports -----------------------------------------
-
 export const onLoad = () => {
+  console.log("[BetterCode] Loading...");
   storage.show_line_num ??= false;
 
-  const { DCDChatManager } =
-    ((ReactNative as unknown as { NativeModules?: { DCDChatManager?: any } })
-      .NativeModules) ?? {};
+  try {
+    const nativeModules = (ReactNative as any).NativeModules;
+    const DCDChatManager = nativeModules?.DCDChatManager;
 
-  if (!DCDChatManager || typeof DCDChatManager.updateRows !== "function") {
-    console.error("[BetterCode] DCDChatManager.updateRows not found; aborting");
-    return;
-  }
+    if (!DCDChatManager) {
+      console.error("[BetterCode] DCDChatManager not found in NativeModules");
+      console.log("[BetterCode] Available NativeModules:", Object.keys(nativeModules || {}));
+      return;
+    }
 
-  unpatch = before(
-    DCDChatManager,
-    "updateRows",
-    (args: [unknown, string]) => {
-      try {
-        const json = args[1];
-        if (typeof json !== "string") return;
+    if (typeof DCDChatManager.updateRows !== "function") {
+      console.error("[BetterCode] DCDChatManager.updateRows is not a function");
+      return;
+    }
 
-        const rows = JSON.parse(json);
-        if (!Array.isArray(rows)) return;
+    console.log("[BetterCode] DCDChatManager found, patching...");
 
-        for (const row of rows) {
-          if (row?.message?.content && Array.isArray(row.message.content)) {
-            const [newContent, newEmbeds] = walkContent(
-              row.message.content,
-            );
-            row.message.content = newContent;
-            if (row.message.embeds) {
-              row.message.embeds.push(...newEmbeds);
-            } else {
-              row.message.embeds = newEmbeds;
+    unpatch = before(
+      DCDChatManager,
+      "updateRows",
+      (args: [unknown, string]) => {
+        try {
+          const json = args[1];
+          if (typeof json !== "string") return;
+
+          const rows = JSON.parse(json);
+          if (!Array.isArray(rows)) return;
+
+          for (const row of rows) {
+            if (row?.message?.content && Array.isArray(row.message.content)) {
+              const [newContent, newEmbeds] = walkContent(row.message.content);
+              row.message.content = newContent;
+              if (row.message.embeds) {
+                row.message.embeds.push(...newEmbeds);
+              } else {
+                row.message.embeds = newEmbeds;
+              }
             }
           }
-        }
 
-        args[1] = JSON.stringify(rows);
-      } catch (e) {
-        console.error("[BetterCode] updateRows error:", e);
-      }
-    },
-  );
+          args[1] = JSON.stringify(rows);
+        } catch (e) {
+          console.error("[BetterCode] updateRows error:", e);
+        }
+      },
+    );
+
+    console.log("[BetterCode] Plugin loaded successfully!");
+  } catch (error) {
+    console.error("[BetterCode] onLoad error:", error);
+  }
 };
 
 export const onUnload = () => {
+  console.log("[BetterCode] Unloading...");
   unpatch?.();
+  console.log("[BetterCode] Plugin unloaded");
 };
 
 export const settings = Settings;
