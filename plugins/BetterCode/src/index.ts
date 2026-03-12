@@ -246,23 +246,25 @@ function walkContent(content: any[]): [any[], any[]] {
           const langMeta = langList[langLower]?.[0] || obj.lang;
           const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
-          const rawContent: any[] = [
-            {
-              content: highlightText(obj.content, langLower),
-              type: "paragraph",
-            },
-            {
-              content: "-- BetterCode",
-              type: "text",
-            },
-          ];
+          // Try using Prism.tokenize first, fall back to simple text if it fails
+          let highlightContent: any[] = [];
+          try {
+            highlightContent = highlightText(obj.content, langLower);
+            // If highlightContent is just a single text element, we might want to simplify
+            if (highlightContent.length === 1 && highlightContent[0].type === "text") {
+              highlightContent = [{ type: "text", content: obj.content }];
+            }
+          } catch (e) {
+            console.warn("[BetterCode] Highlight failed, using plain text");
+            highlightContent = [{ type: "text", content: obj.content }];
+          }
 
           const embed = {
-            type: "rich" as const,
-            description: rawContent,
+            type: "rich",
+            description: [{ type: "paragraph", content: highlightContent }],
             author: {
               name: langMeta,
-              iconURL,
+              iconURL: iconURL,
               iconProxyURL: iconURL,
             },
             borderLeftColor: processColor("#e0e0ff"),
@@ -286,23 +288,24 @@ function walkContent(content: any[]): [any[], any[]] {
             const langMeta = langList[langLower][0];
             const iconURL = `${LOGOS_BASE}/${langMeta}.png`;
 
-            const rawContent: any[] = [
-              {
-                content: highlightText(obj.content, targetLang),
-                type: "paragraph",
-              },
-              {
-                content: "-- BetterCode",
-                type: "text",
-              },
-            ];
+            // Try using Prism.tokenize first, fall back to simple text if it fails
+            let highlightContent: any[] = [];
+            try {
+              highlightContent = highlightText(obj.content, targetLang);
+              if (highlightContent.length === 1 && highlightContent[0].type === "text") {
+                highlightContent = [{ type: "text", content: obj.content }];
+              }
+            } catch (e) {
+              console.warn("[BetterCode] Highlight failed, using plain text");
+              highlightContent = [{ type: "text", content: obj.content }];
+            }
 
             const embed = {
-              type: "rich" as const,
-              description: rawContent,
+              type: "rich",
+              description: [{ type: "paragraph", content: highlightContent }],
               author: {
                 name: langMeta,
-                iconURL,
+                iconURL: iconURL,
                 iconProxyURL: iconURL,
               },
               borderLeftColor: processColor("#e0e0ff"),
