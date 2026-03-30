@@ -193,25 +193,122 @@ const RepositoriesSection = () => {
 
   const getLanguageColor = (language) => {
     const colors = {
-      'JavaScript': '#f1e05a',
-      'TypeScript': '#3178c6',
-      'Python': '#3776ab',
-      'Java': '#d4af37',
-      'C++': '#f34b7d',
-      'C#': '#4CAF50',
-      'Go': '#00add8',
-      'Rust': '#dea584',
-      'PHP': '#4f5d95',
-      'Ruby': '#701516',
-      'Swift': '#fa7343',
-      'Kotlin': '#a97bff',
-      'HTML': '#e34c26',
-      'CSS': '#1572b6',
-      'Shell': '#89e051',
-      'Misc': '#9ca3af',
-      'Other': '#6c757d'
+      javascript: '#f1e05a',
+      typescript: '#3178c6',
+      python: '#3776ab',
+      java: '#d4af37',
+      lua: '#3b82f6',
+      luau: '#3b82f6',
+      'c++': '#f34b7d',
+      c: '#555555',
+      'c#': '#4CAF50',
+      go: '#00add8',
+      rust: '#dea584',
+      php: '#4f5d95',
+      ruby: '#701516',
+      swift: '#fa7343',
+      kotlin: '#a97bff',
+      dart: '#00B4AB',
+      scala: '#c22d40',
+      r: '#198CE7',
+      elixir: '#6e4a7e',
+      erlang: '#B83998',
+      haskell: '#5e5086',
+      clojure: '#db5855',
+      'f#': '#b845fc',
+      ocaml: '#ef7a08',
+      nim: '#ffc200',
+      zig: '#ec915c',
+      julia: '#a270ba',
+      perl: '#0298c3',
+      groovy: '#4298b8',
+      'objective-c': '#438eff',
+      'objective-c++': '#6866fb',
+      'visual basic .net': '#945db7',
+      assembly: '#6e4c13',
+      html: '#e34c26',
+      css: '#1572b6',
+      scss: '#c6538c',
+      sass: '#a53b70',
+      less: '#1d365d',
+      stylus: '#ff6347',
+      vue: '#41b883',
+      svelte: '#ff3e00',
+      astro: '#ff5d01',
+      shell: '#89e051',
+      bash: '#89e051',
+      zsh: '#89e051',
+      powershell: '#012456',
+      batchfile: '#c1f12e',
+      dockerfile: '#384d54',
+      makefile: '#427819',
+      cmake: '#da3434',
+      nix: '#7e7eff',
+      hcl: '#844fba',
+      terraform: '#844fba',
+      yaml: '#cb171e',
+      toml: '#9c4221',
+      ini: '#d1dbe0',
+      xml: '#0060ac',
+      json: '#292929',
+      markdown: '#083fa1',
+      tex: '#3d6117',
+      latex: '#3d6117',
+      sql: '#e38c00',
+      'jupyter notebook': '#da5b0b',
+      shaderlab: '#222c37',
+      glsl: '#5686a5',
+      'vim script': '#199f4b',
+      'react jsx': '#61dafb',
+      'react tsx': '#61dafb',
+      matlab: '#e16737',
+      haxe: '#df7900',
+      gdscript: '#355570',
+      fortran: '#4d41b1',
+      cobol: '#005ca5',
+      pascal: '#e3f171',
+      ada: '#02f88c',
+      lisp: '#3fb68b',
+      scheme: '#1e4aec',
+      racket: '#3c5caa',
+      prolog: '#74283c',
+      solidity: '#AA6746',
+      vhdl: '#adb2cb',
+      verilog: '#b2b7f8',
+      apex: '#1797c0',
+      'common lisp': '#3fb68b',
+      plaintext: '#9ca3af',
+      'plain text': '#9ca3af',
+      misc: '#9ca3af',
+      other: '#6c757d'
     };
-    return colors[language] || colors['Other'];
+
+    const normalized = (language || 'other').toLowerCase().trim();
+    const aliases = {
+      js: 'javascript',
+      ts: 'typescript',
+      jsx: 'react jsx',
+      tsx: 'react tsx',
+      sh: 'bash',
+      md: 'markdown',
+      yml: 'yaml',
+      rb: 'ruby',
+      rs: 'rust',
+      ps1: 'powershell',
+      txt: 'plain text'
+    };
+
+    const key = aliases[normalized] || normalized;
+    if (colors[key]) return colors[key];
+
+    // Deterministic fallback so every unknown language still gets a stable color.
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) {
+      hash = key.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 62%, 52%)`;
   };
 
   if (loading) {
