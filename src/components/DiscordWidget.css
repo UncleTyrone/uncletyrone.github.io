@@ -5,6 +5,12 @@
   padding: 2rem 1rem;
 }
 
+.discord-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
 /* Discord Widget */
 .discord-widget {
   background: 
@@ -17,8 +23,8 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -50,6 +56,33 @@
 
 .discord-widget:hover::before {
   opacity: 1;
+}
+
+.discord-banner {
+  margin: -2rem -2rem 1.25rem -2rem;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 20px 20px 12px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discord-banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discord-widget-luanova .discord-icon {
+  border: 2px solid rgba(132, 99, 255, 0.45);
+  border-radius: 50%;
+  background: rgba(12, 7, 30, 0.5);
+}
+
+.discord-widget-luanova .discord-server-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 /* Discord Header */
@@ -112,6 +145,11 @@
 
 .highlight-rescheduled {
   color: #5865f2;
+  font-weight: 700;
+}
+
+.highlight-luanova {
+  color: #a78bfa;
   font-weight: 700;
 }
 
@@ -198,9 +236,18 @@
   .discord-widget-container {
     padding: 1rem;
   }
+
+  .discord-widgets-grid {
+    grid-template-columns: 1fr;
+  }
   
   .discord-widget {
     padding: 1.5rem;
+  }
+
+  .discord-banner {
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    height: 100px;
   }
   
   .discord-header {
@@ -227,6 +274,11 @@
 @media (max-width: 480px) {
   .discord-widget {
     padding: 1.25rem;
+  }
+
+  .discord-banner {
+    margin: -1.25rem -1.25rem 0.9rem -1.25rem;
+    height: 84px;
   }
   
   .discord-stats {
