@@ -4,9 +4,7 @@ import MiniLanguageChart from './MiniLanguageChart';
 import FileStructure from './FileStructure';
 import './MiniLanguageChart.css';
 
-const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepositoryLanguages }) => {
-  const languages = getRepositoryLanguages(repository);
-
+const RepositoryCard = ({ repository, getLanguageColor }) => {
   return (
     <div className="repository-card">
       <h3 className="repository-title">
