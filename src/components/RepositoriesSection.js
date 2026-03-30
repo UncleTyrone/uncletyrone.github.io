@@ -76,6 +76,16 @@ const RepositoriesSection = () => {
         // Continue to fetch fresh data
       }
     }
+
+    // Keep stale cache as emergency fallback if the API fails/rate-limits.
+    let staleCachedRepos = null;
+    if (cachedData) {
+      try {
+        staleCachedRepos = JSON.parse(cachedData);
+      } catch (cacheParseError) {
+        console.warn('Failed to parse stale cached data:', cacheParseError);
+      }
+    }
     
     
     // Try to fetch from GitHub API
@@ -96,99 +106,31 @@ const RepositoriesSection = () => {
         console.log('Successfully fetched repositories:', reposData.length);
         console.log('Repository data:', reposData);
         
-        // Cache the data
-        localStorage.setItem('github-repos-cache', JSON.stringify(reposData));
-        localStorage.setItem('github-repos-cache-time', now.toString());
-        
         // Filter out forks and get only original repositories
         const originalRepos = reposData.filter(repo => !repo.fork);
         console.log('Original repositories (non-forks):', originalRepos.length);
-        
-        // Fetch subscriber counts for each repository
-        const reposWithSubscribers = await Promise.all(
-          originalRepos.map(async (repo) => {
-            try {
-              const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}`, {
-                headers: {
-                  'Accept': 'application/vnd.github.v3+json',
-                  'User-Agent': 'UncleTyrone-Portfolio'
-                }
-              });
-              
-              if (subscribersResponse.ok) {
-                const repoDetails = await subscribersResponse.json();
-                console.log(`Repository ${repo.full_name} details:`, {
-                  subscribers_count: repoDetails.subscribers_count,
-                  watchers_count: repoDetails.watchers_count,
-                  watchers: repoDetails.watchers
-                });
-                return {
-                  ...repo,
-                  subscribers_count: repoDetails.subscribers_count || repoDetails.watchers_count || repoDetails.watchers || 0
-                };
-              } else {
-                console.warn(`Failed to fetch subscribers for ${repo.full_name}:`, subscribersResponse.status);
-                return {
-                  ...repo,
-                  subscribers_count: 0
-                };
-              }
-            } catch (error) {
-              console.warn(`Error fetching subscribers for ${repo.full_name}:`, error);
-              return {
-                ...repo,
-                subscribers_count: 0
-              };
-            }
-          })
-        );
-        
+
+        // Use list endpoint counts to avoid dozens of extra API calls (prevents rate limiting).
+        const reposWithSubscribers = originalRepos.map((repo) => ({
+          ...repo,
+          subscribers_count: repo.watchers_count || repo.watchers || 0
+        }));
         setRepositories(reposWithSubscribers);
 
         // For contributions, we'll fetch repositories where the user has contributed
         const forks = reposData.filter(repo => repo.fork);
         console.log('Forked repositories:', forks.length);
         
-        // Fetch subscriber counts for contributions (forks) as well
-        const forksWithSubscribers = await Promise.all(
-          forks.map(async (repo) => {
-            try {
-              const subscribersResponse = await fetch(`https://api.github.com/repos/${repo.full_name}`, {
-                headers: {
-                  'Accept': 'application/vnd.github.v3+json',
-                  'User-Agent': 'UncleTyrone-Portfolio'
-                }
-              });
-              
-              if (subscribersResponse.ok) {
-                const repoDetails = await subscribersResponse.json();
-                console.log(`Contribution ${repo.full_name} details:`, {
-                  subscribers_count: repoDetails.subscribers_count,
-                  watchers_count: repoDetails.watchers_count,
-                  watchers: repoDetails.watchers
-                });
-                return {
-                  ...repo,
-                  subscribers_count: repoDetails.subscribers_count || repoDetails.watchers_count || repoDetails.watchers || 0
-                };
-              } else {
-                console.warn(`Failed to fetch subscribers for contribution ${repo.full_name}:`, subscribersResponse.status);
-                return {
-                  ...repo,
-                  subscribers_count: 0
-                };
-              }
-            } catch (error) {
-              console.warn(`Error fetching subscribers for contribution ${repo.full_name}:`, error);
-              return {
-                ...repo,
-                subscribers_count: 0
-              };
-            }
-          })
-        );
-        
+        const forksWithSubscribers = forks.map((repo) => ({
+          ...repo,
+          subscribers_count: repo.watchers_count || repo.watchers || 0
+        }));
         setContributions(forksWithSubscribers);
+
+        // Cache enriched data after successful fetch
+        const mergedForCache = [...reposWithSubscribers, ...forksWithSubscribers];
+        localStorage.setItem('github-repos-cache', JSON.stringify(mergedForCache));
+        localStorage.setItem('github-repos-cache-time', now.toString());
       } else if (reposResponse.status === 403) {
         console.error('GitHub API rate limit exceeded');
         throw new Error('GitHub API rate limit exceeded. Please try again later.');
@@ -205,7 +147,17 @@ const RepositoriesSection = () => {
         name: apiError.name
       });
       
-      // Use fallback data with just the portfolio repository
+      // Try stale cache first so the UI keeps real data during API issues.
+      if (staleCachedRepos && staleCachedRepos.length > 0) {
+        const originalRepos = staleCachedRepos.filter(repo => !repo.fork);
+        const forks = staleCachedRepos.filter(repo => repo.fork);
+        setRepositories(originalRepos);
+        setContributions(forks);
+        setLoading(false);
+        return;
+      }
+
+      // Last-resort fallback data if nothing cached exists.
       const fallbackRepos = [
         {
           id: 1,
@@ -224,10 +176,6 @@ const RepositoriesSection = () => {
       
       setRepositories(fallbackRepos);
       setContributions([]);
-      
-      // Cache fallback data
-      localStorage.setItem('github-repos-cache', JSON.stringify(fallbackRepos));
-      localStorage.setItem('github-repos-cache-time', now.toString());
     }
 
     setLoading(false);
