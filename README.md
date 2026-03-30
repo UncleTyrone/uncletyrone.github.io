@@ -9,7 +9,9 @@ React portfolio site with:
 This repository also includes a separate backend proxy (see `github-proxy-service/`) for displaying private repositories safely.
 
 ## Repository Links & Additional Tools
+
 [DevTools Usage](scripts/README-devtools.md)
+
 [Proxy Service Setup](github-proxy-service/README.md)
 
 ## Features
