@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './BuildWidget.css';
+import { fetchGitHub } from '../utils/githubApi';
 
 const BuildWidget = ({ repository }) => {
   console.log('BuildWidget rendered with repository:', repository?.name, repository?.full_name);
@@ -59,12 +60,7 @@ const BuildWidget = ({ repository }) => {
     try {
       console.log('Fetching release data for:', repository.full_name);
       
-      const releasesResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/releases?per_page=5`, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'UncleTyrone-Portfolio'
-        }
-      });
+      const releasesResponse = await fetchGitHub(`/repos/${repository.full_name}/releases?per_page=5`);
       
       if (releasesResponse.ok) {
         const releases = await releasesResponse.json();

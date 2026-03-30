@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './FileStructure.css';
+import { fetchGitHub } from '../utils/githubApi';
 
 const FileStructure = ({ repository }) => {
   const [files, setFiles] = useState([]);
@@ -44,12 +45,7 @@ const FileStructure = ({ repository }) => {
       try {
         console.log('Fetching repository contents for:', repository.full_name);
         
-        const contentsResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/contents?per_page=20`, {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'UncleTyrone-Portfolio'
-          }
-        });
+        const contentsResponse = await fetchGitHub(`/repos/${repository.full_name}/contents?per_page=20`);
         
         if (contentsResponse.ok) {
           const contents = await contentsResponse.json();

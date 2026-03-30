@@ -112,6 +112,8 @@ uncletyrone.github.io/
 - The website automatically fetches your public repositories
 - Contributions are shown as forked repositories (simplified approach)
 - For more advanced contribution tracking, you'd need to use GitHub's GraphQL API
+- To include private repositories safely, deploy the **separate** proxy in `github-proxy-service/` as its own repo (see that folder’s README for Render). Set on the portfolio build:
+  - `REACT_APP_GITHUB_PROXY_URL` = your deployed proxy base, e.g. `https://your-service.onrender.com/api/github`
 
 ### Music Player
 - Supports 5 tracks maximum

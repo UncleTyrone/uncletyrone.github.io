@@ -3,6 +3,7 @@ import BuildWidget from './BuildWidget';
 import MiniLanguageChart from './MiniLanguageChart';
 import FileStructure from './FileStructure';
 import './MiniLanguageChart.css';
+import { fetchGitHub } from '../utils/githubApi';
 
 const RepositoryCard = ({ repository, getLanguageColor }) => {
   const [watcherCount, setWatcherCount] = useState(
@@ -26,12 +27,7 @@ const RepositoryCard = ({ repository, getLanguageColor }) => {
           return;
         }
 
-        const response = await fetch(`https://api.github.com/repos/${repository.full_name}`, {
-          headers: {
-            Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'UncleTyrone-Portfolio'
-          }
-        });
+        const response = await fetchGitHub(`/repos/${repository.full_name}`);
 
         if (response.ok) {
           const details = await response.json();

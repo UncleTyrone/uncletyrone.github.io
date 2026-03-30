@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RepositoryCard from './RepositoryCard';
+import { fetchGitHub } from '../utils/githubApi';
 
 const RepositoriesSection = () => {
   const [activeTab, setActiveTab] = useState('repositories');
@@ -91,12 +92,7 @@ const RepositoriesSection = () => {
     // Try to fetch from GitHub API
     try {
       console.log('Fetching repositories from GitHub API...');
-      const reposResponse = await fetch('https://api.github.com/users/UncleTyrone/repos?sort=updated&per_page=50', {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'UncleTyrone-Portfolio'
-        }
-      });
+      const reposResponse = await fetchGitHub('/users/UncleTyrone/repos?sort=updated&per_page=100');
       
       console.log('GitHub API response status:', reposResponse.status);
       console.log('GitHub API response headers:', reposResponse.headers);

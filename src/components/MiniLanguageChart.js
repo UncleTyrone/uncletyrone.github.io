@@ -5,6 +5,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
+import { fetchGitHub } from '../utils/githubApi';
 
 ChartJS.register(ArcElement, Tooltip);
 
@@ -56,12 +57,7 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
       try {
         console.log('Fetching language data for:', repository.full_name);
         
-        const languagesResponse = await fetch(`https://api.github.com/repos/${repository.full_name}/languages`, {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'UncleTyrone-Portfolio'
-          }
-        });
+        const languagesResponse = await fetchGitHub(`/repos/${repository.full_name}/languages`);
         
         if (languagesResponse.ok) {
           const languageData = await languagesResponse.json();
