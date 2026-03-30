@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: github-proxy-service
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
+        optional: true

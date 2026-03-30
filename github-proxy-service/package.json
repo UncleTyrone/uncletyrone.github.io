@@ -1,0 +1,17 @@
+{
+  "name": "github-proxy-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal GitHub REST API proxy for private tokens (Render, Railway, etc.)",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
