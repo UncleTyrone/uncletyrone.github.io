@@ -82,8 +82,11 @@
 }
 
 .discord-widget-rescheduled .discord-server-image {
+  width: 80%;
+  height: 80%;
+  display: block;
+  object-fit: contain;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .discord-widget-luanova .discord-icon {
@@ -95,7 +98,8 @@
 .discord-widget-luanova .discord-server-image {
   width: 80%;
   height: 80%;
-  object-fit: cover;
+  display: block;
+  object-fit: contain;
   border-radius: 50%;
 }
 
@@ -128,6 +132,9 @@
 .discord-server-image {
   width: 80%;
   height: 80%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
   object-fit: contain;
 }
 
