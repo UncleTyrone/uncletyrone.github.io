@@ -82,10 +82,10 @@
 }
 
 .discord-widget-rescheduled .discord-server-image {
-  width: 95%;
-  height: 95%;
+  width: 300%;
+  height: 300%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 50%;
 }
 
