@@ -89,13 +89,10 @@ const RepositoryCard = ({ repository, formatLanguage, getLanguageColor, getRepos
             alignItems: 'center',
             flexWrap: 'wrap'
           }}>
-            {languages.length > 0 && languages.map((language, index) => (
-              <MiniLanguageChart
-                key={index}
-                repository={repository}
-                getLanguageColor={getLanguageColor}
-              />
-            ))}
+            <MiniLanguageChart
+              repository={repository}
+              getLanguageColor={getLanguageColor}
+            />
           </div>
         </div>
       </div>

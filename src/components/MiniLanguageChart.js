@@ -95,6 +95,15 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
         const generateFallbackLanguage = (repo) => {
           const repoName = repo.name.toLowerCase();
           const description = (repo.description || '').toLowerCase();
+
+          // Prefer GitHub's primary language when available.
+          // This prevents heuristics from mislabeling repos like TradeTweaks (Java).
+          if (repo.language) {
+            return {
+              languages: [repo.language],
+              languageData: { [repo.language]: 100 }
+            };
+          }
           
           if (repoName.includes('website') || repoName.includes('portfolio') || repoName.includes('uncletyrone')) {
             return {
