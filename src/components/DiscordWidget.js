@@ -11,6 +11,7 @@ const SERVERS = [
     buttonText: 'Join Rescheduled Discord',
     iconUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/RescheduledNeuxs.png',
     iconAlt: 'Rescheduled Discord Server',
+    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/RescheduledWide.png',
     variantClass: 'discord-widget-rescheduled',
     highlightClass: 'highlight-rescheduled'
   },
@@ -23,7 +24,7 @@ const SERVERS = [
     buttonText: 'Join LuaNova Discord',
     iconUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaSpin.gif',
     iconAlt: 'LuaNova Discord Server',
-    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaCover.png',
+    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaCodeWide.png',
     variantClass: 'discord-widget-luanova',
     highlightClass: 'highlight-luanova'
   }
