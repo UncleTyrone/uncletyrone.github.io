@@ -24,7 +24,7 @@ const SERVERS = [
     buttonText: 'Join LuaNova Discord',
     iconUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaSpin.gif',
     iconAlt: 'LuaNova Discord Server',
-    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaWide.png',
+    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaWideCode.png',
     variantClass: 'discord-widget-luanova',
     highlightClass: 'highlight-luanova'
   }
