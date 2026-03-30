@@ -123,21 +123,24 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
     fetchRepositoryLanguages();
   }, [repository]);
   
-  // Calculate percentages from language data
-  const calculatePercentages = () => {
+  const getLanguageStats = () => {
     const totalBytes = Object.values(languageData).reduce((sum, bytes) => sum + bytes, 0);
-    return languages.map(lang => {
+    return languages.map((lang) => {
       const bytes = languageData[lang] || 0;
-      return Math.round((bytes / totalBytes) * 100);
+      const percentage = totalBytes > 0 ? (bytes / totalBytes) * 100 : 0;
+      return { lang, bytes, percentage };
     });
   };
+
+  const languageStats = getLanguageStats();
 
   // Create data for the mini chart
   const chartData = {
     labels: languages,
     datasets: [
       {
-        data: Object.keys(languageData).length > 0 ? calculatePercentages() : languages.map(() => 1),
+        // Use raw byte counts to preserve tiny language slivers.
+        data: Object.keys(languageData).length > 0 ? languageStats.map((item) => item.bytes) : languages.map(() => 1),
         backgroundColor: languages.map(lang => getLanguageColor(lang)),
         borderColor: languages.map(lang => getLanguageColor(lang)),
         borderWidth: 1,
@@ -209,11 +212,10 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
               <div className="tooltip-content">
                 <div className="tooltip-title">{repository.name}</div>
                 <div className="tooltip-body">
-                  {languages.map((lang, index) => {
-                    const totalBytes = Object.values(languageData).reduce((sum, bytes) => sum + bytes, 0);
-                    const bytes = languageData[lang] || 0;
-                    const percentage = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0;
-                    
+                  {languageStats.map(({ lang, percentage }, index) => {
+                    const formattedPercentage =
+                      percentage > 0 && percentage < 0.1 ? '<0.1' : percentage.toFixed(1);
+
                     return (
                       <div key={index} className="tooltip-language">
                         <span 
@@ -221,7 +223,7 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
                           style={{ backgroundColor: getLanguageColor(lang) }}
                         ></span>
                         <span className="tooltip-language-name">{lang}</span>
-                        <span className="tooltip-percentage">{percentage}%</span>
+                        <span className="tooltip-percentage">{formattedPercentage}%</span>
                       </div>
                     );
                   })}
