@@ -91,48 +91,21 @@ const MiniLanguageChart = ({ repository, getLanguageColor }) => {
       } catch (apiError) {
         console.error('Error fetching language data:', apiError);
         
-        // Use dynamic fallback based on repository type
+        // Use conservative fallback behavior:
+        // - Prefer GitHub's primary language if present
+        // - Otherwise show "Other" instead of guessed languages
         const generateFallbackLanguage = (repo) => {
-          const repoName = repo.name.toLowerCase();
-          const description = (repo.description || '').toLowerCase();
-
-          // Prefer GitHub's primary language when available.
-          // This prevents heuristics from mislabeling repos like TradeTweaks (Java).
           if (repo.language) {
             return {
               languages: [repo.language],
               languageData: { [repo.language]: 100 }
             };
           }
-          
-          if (repoName.includes('website') || repoName.includes('portfolio') || repoName.includes('uncletyrone')) {
-            return {
-              languages: ['JavaScript', 'CSS', 'HTML'],
-              languageData: { 'JavaScript': 60, 'CSS': 25, 'HTML': 15 }
-            };
-          } else if (repoName.includes('mod') || repoName.includes('script') || description.includes('mod')) {
-            return {
-              languages: ['JavaScript', 'Python'],
-              languageData: { 'JavaScript': 70, 'Python': 30 }
-            };
-          } else if (description.includes('api') || repoName.includes('api')) {
-            return {
-              languages: ['JavaScript', 'TypeScript'],
-              languageData: { 'JavaScript': 60, 'TypeScript': 40 }
-            };
-          } else if (description.includes('bot') || repoName.includes('bot')) {
-            return {
-              languages: ['JavaScript', 'JSON'],
-              languageData: { 'JavaScript': 85, 'JSON': 15 }
-            };
-          } else {
-            // Default based on primary language or JavaScript
-            const primaryLang = repo.language || 'JavaScript';
-            return {
-              languages: [primaryLang],
-              languageData: { [primaryLang]: 100 }
-            };
-          }
+
+          return {
+            languages: ['Other'],
+            languageData: { Other: 100 }
+          };
         };
         
         const fallbackData = generateFallbackLanguage(repository);
