@@ -109,7 +109,7 @@ uncletyrone.github.io/
 - The main color scheme uses blue accents (`#60a5fa`, `#3b82f6`)
 
 ### GitHub API
-- The website automatically fetches your public repositories
+- The website automatically fetches all your public repositories
 - Contributions are shown as forked repositories (simplified approach)
 - For more advanced contribution tracking, you'd need to use GitHub's GraphQL API
 - To include private repositories safely, deploy the **separate** proxy in `github-proxy-service/` as its own repo (see that folder’s README for Render). Set on the portfolio build:
