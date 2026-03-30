@@ -19,6 +19,11 @@ const getApiBase = () => {
   return DEFAULT_PROXY_BASE;
 };
 
+/** Baked in at build time — in DevTools console run: window.__GITHUB_API_BASE__ */
+if (typeof window !== 'undefined') {
+  window.__GITHUB_API_BASE__ = getApiBase();
+}
+
 const isDirectGitHub = (base) => base === DIRECT_GITHUB_API_BASE;
 
 export const fetchGitHub = async (path, options = {}) => {
