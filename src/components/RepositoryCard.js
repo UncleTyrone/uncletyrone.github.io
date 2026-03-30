@@ -1,10 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import BuildWidget from './BuildWidget';
 import MiniLanguageChart from './MiniLanguageChart';
 import FileStructure from './FileStructure';
 import './MiniLanguageChart.css';
 
 const RepositoryCard = ({ repository, getLanguageColor }) => {
+  const [watcherCount, setWatcherCount] = useState(
+    typeof repository.subscribers_count === 'number' ? repository.subscribers_count : null
+  );
+
+  useEffect(() => {
+    const fetchWatcherCount = async () => {
+      if (!repository?.full_name) return;
+
+      const cacheKey = `repo-watchers-${repository.full_name}`;
+      const cacheTimeKey = `${cacheKey}-time`;
+      const now = Date.now();
+
+      try {
+        const cachedCount = localStorage.getItem(cacheKey);
+        const cachedTime = localStorage.getItem(cacheTimeKey);
+
+        if (cachedCount && cachedTime && now - parseInt(cachedTime, 10) < 43200000) {
+          setWatcherCount(parseInt(cachedCount, 10));
+          return;
+        }
+
+        const response = await fetch(`https://api.github.com/repos/${repository.full_name}`, {
+          headers: {
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'UncleTyrone-Portfolio'
+          }
+        });
+
+        if (response.ok) {
+          const details = await response.json();
+          const subscribers = typeof details.subscribers_count === 'number' ? details.subscribers_count : 0;
+          setWatcherCount(subscribers);
+          localStorage.setItem(cacheKey, subscribers.toString());
+          localStorage.setItem(cacheTimeKey, now.toString());
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch watcher count for ${repository.full_name}:`, error);
+      }
+    };
+
+    fetchWatcherCount();
+  }, [repository?.full_name]);
+
   return (
     <div className="repository-card">
       <h3 className="repository-title">
@@ -27,7 +70,7 @@ const RepositoryCard = ({ repository, getLanguageColor }) => {
       <FileStructure repository={repository} />
       
       {/* Stats Row - Above View Project Button */}
-      {(repository.stargazers_count > 0 || repository.forks_count > 0 || repository.subscribers_count > 0) && (
+      {(repository.stargazers_count > 0 || repository.forks_count > 0 || (watcherCount ?? 0) > 0) && (
         <div style={{ 
           display: 'flex', 
           gap: '0.75rem', 
@@ -47,9 +90,9 @@ const RepositoryCard = ({ repository, getLanguageColor }) => {
               🍴 {repository.forks_count}
             </span>
           )}
-          {repository.subscribers_count > 0 && (
-            <span title={`${repository.subscribers_count} watchers`}>
-              👀 {repository.subscribers_count}
+          {(watcherCount ?? 0) > 0 && (
+            <span title={`${watcherCount} watchers`}>
+              👀 {watcherCount}
             </span>
           )}
         </div>

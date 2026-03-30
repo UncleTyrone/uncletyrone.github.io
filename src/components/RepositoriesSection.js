@@ -110,10 +110,11 @@ const RepositoriesSection = () => {
         const originalRepos = reposData.filter(repo => !repo.fork);
         console.log('Original repositories (non-forks):', originalRepos.length);
 
-        // Use list endpoint counts to avoid dozens of extra API calls (prevents rate limiting).
+        // Do not use watchers_count here: GitHub's list endpoint mirrors stars in that field.
+        // True "watching" count is subscribers_count from per-repo details and is fetched per card.
         const reposWithSubscribers = originalRepos.map((repo) => ({
           ...repo,
-          subscribers_count: repo.watchers_count || repo.watchers || 0
+          subscribers_count: null
         }));
         setRepositories(reposWithSubscribers);
 
@@ -123,7 +124,7 @@ const RepositoriesSection = () => {
         
         const forksWithSubscribers = forks.map((repo) => ({
           ...repo,
-          subscribers_count: repo.watchers_count || repo.watchers || 0
+          subscribers_count: null
         }));
         setContributions(forksWithSubscribers);
 
