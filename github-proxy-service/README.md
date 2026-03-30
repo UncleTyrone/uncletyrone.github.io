@@ -1,55 +1,62 @@
 # GitHub API proxy service
 
-Minimal Express server that proxies `GET`/`HEAD` requests from `/api/github/*` to `https://api.github.com/*` using a server-side `GITHUB_TOKEN`. Use this so a frontend (e.g. GitHub Pages) can call GitHub with private-repo access without exposing a token.
+Minimal Node/Express server that proxies:
+- `GET/HEAD /api/github/*` → `https://api.github.com/*`
 
-## Quick start (local)
+It uses a server-side `GITHUB_TOKEN` so your frontend can display private repositories without exposing credentials in the browser.
+
+## Required environment variables
+
+- `GITHUB_TOKEN` (required)
+  - A GitHub token with read access to the repos you want to show
+  - Fine-grained PAT is recommended
+- `ALLOWED_ORIGIN` (optional)
+  - Used for CORS: sets `Access-Control-Allow-Origin`
+  - Default is `*`
+
+## Local development
 
 ```bash
 cd github-proxy-service
 npm install
-set GITHUB_TOKEN=ghp_your_token_here   # Windows
-# export GITHUB_TOKEN=ghp_your_token_here   # macOS/Linux
+set GITHUB_TOKEN=ghp_your_token_here
 npm start
 ```
 
-Health check: `http://localhost:8787/health`  
-Example: `http://localhost:8787/api/github/user`
+Health check:
+- `http://localhost:8787/health`
 
-## Use as its own Git repo
+Example:
+- `http://localhost:8787/api/github/user`
 
-This folder is self-contained. From inside `github-proxy-service/`:
+## Render deployment (Web Service)
 
-```bash
-git init
-git add .
-git commit -m "Initial github proxy service"
-git remote add origin https://github.com/YOU/github-proxy-service.git
-git push -u origin main
-```
+1. Render → New → Web Service
+2. Connect the repo that contains this folder
+3. Build command: `npm install`
+4. Start command: `npm start`
+5. Add environment variables:
+   - `GITHUB_TOKEN`
+   - Optional: `ALLOWED_ORIGIN`
 
-## Deploy on Render
+Render will provide a URL like:
+- `https://github-proxy-service.onrender.com`
 
-1. **New** → **Web Service** → connect the repo that contains only this folder (or use a monorepo with **Root Directory** = `github-proxy-service`).
-2. **Build command:** `npm install`
-3. **Start command:** `npm start`
-4. **Environment variables:**
-   - `GITHUB_TOKEN` — fine-grained PAT with read access to the repos you need
-   - Optional: `ALLOWED_ORIGIN` — your site origin, e.g. `https://uncletyrone.github.io` (tightens CORS; default is `*`)
+## Frontend configuration (portfolio)
 
-Your proxy base URL will look like `https://github-proxy-service-xxxx.onrender.com`.
-
-## Frontend (portfolio) configuration
-
-Set at **build time** (e.g. in `.env.production`):
+Set (build-time) on the portfolio site:
 
 ```env
-REACT_APP_GITHUB_PROXY_URL=https://your-service.onrender.com/api/github
+REACT_APP_GITHUB_PROXY_URL=https://github-proxy-service.onrender.com/api/github
 ```
 
-Rebuild and deploy the React app. The client should call `REACT_APP_GITHUB_PROXY_URL` + path, e.g. `/users/.../repos`.
+The portfolio app will call the proxy using paths like:
+- `/api/github/users/...`
+- `/api/github/user/repos?...`
+- `/api/github/repos/:full_name/languages`
 
-## Security
+## Security notes
 
-- Never commit `GITHUB_TOKEN` or put it in frontend env vars.
-- Prefer a fine-grained token limited to specific repositories.
-- Use `ALLOWED_ORIGIN` in production.
+- Do not put `GITHUB_TOKEN` in frontend code or frontend env vars.
+- Prefer limiting the token to only the repositories you need (fine-grained PAT).
+
