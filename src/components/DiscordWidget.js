@@ -22,8 +22,8 @@ const SERVERS = [
     description: 'Connect with my personal community of Luau enthusiasts and stay in sync with all of my latest projects!',
     buttonText: 'Join LuaNova Discord',
     iconUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaSpin.gif',
-    iconAlt: 'LuaNova spinning logo',
-    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaThumbnail.png',
+    iconAlt: 'LuaNova Discord Server',
+    bannerUrl: 'https://raw.githubusercontent.com/UncleTyrone/uncletyronepics/refs/heads/main/LuaNovaCover.png',
     variantClass: 'discord-widget-luanova',
     highlightClass: 'highlight-luanova'
   }
@@ -91,11 +91,11 @@ const DiscordWidget = () => {
       <div className="discord-widgets-grid">
         {SERVERS.map((server) => (
           <div key={server.key} className={`discord-widget ${server.variantClass}`}>
-            {server.bannerUrl && (
-              <div className="discord-banner">
+            <div className={`discord-banner ${server.bannerUrl ? '' : 'discord-banner-placeholder'}`}>
+              {server.bannerUrl && (
                 <img src={server.bannerUrl} alt={`${server.title} banner`} className="discord-banner-image" />
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="discord-header">
               <div className="discord-icon">

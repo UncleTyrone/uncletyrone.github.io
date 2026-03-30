@@ -72,8 +72,12 @@
   object-fit: cover;
 }
 
+.discord-banner-placeholder {
+  background: linear-gradient(135deg, rgba(45, 55, 72, 0.22) 0%, rgba(30, 41, 59, 0.16) 100%);
+}
+
 .discord-widget-luanova .discord-icon {
-  border: 2px solid rgba(132, 99, 255, 0.45);
+  border: 2px solid #50c3ff;
   border-radius: 50%;
   background: rgba(12, 7, 30, 0.5);
 }
@@ -149,7 +153,7 @@
 }
 
 .highlight-luanova {
-  color: #a78bfa;
+  color: #50c3ff;
   font-weight: 700;
 }
 
