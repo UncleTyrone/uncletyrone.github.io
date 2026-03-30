@@ -6,7 +6,7 @@ const HeroSection = () => {
   return (
     <section className="hero-section">
       <h1 className="hero-title">UncleTyrone</h1>
-      <p className="hero-description">Modder and Script Developer</p>
+      <p className="hero-description">Modder and Developer</p>
       
       <SocialLinks />
       
