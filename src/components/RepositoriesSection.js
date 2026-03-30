@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import RepositoryCard from './RepositoryCard';
-import { fetchGitHub } from '../utils/githubApi';
+import { fetchGitHub, getReposListPath } from '../utils/githubApi';
+
+const REPOS_CACHE_KEY = 'github-repos-cache-v2';
+const REPOS_CACHE_TIME_KEY = 'github-repos-cache-v2-time';
 
 const RepositoriesSection = () => {
   const [activeTab, setActiveTab] = useState('repositories');
@@ -13,12 +16,13 @@ const RepositoriesSection = () => {
   useEffect(() => {
     window.clearAllGitHubCaches = () => {
       const keys = Object.keys(localStorage);
-      const githubKeys = keys.filter(key => 
-        key.includes('github') || 
-        key.includes('build-data') || 
-        key.includes('languages-') || 
+      const githubKeys = keys.filter(key =>
+        key.includes('github') ||
+        key.includes('build-data') ||
+        key.includes('languages-') ||
         key.includes('file-structure-') ||
-        key.includes('discord-server')
+        key.includes('discord-server') ||
+        key.includes('repo-watchers-')
       );
       githubKeys.forEach(key => localStorage.removeItem(key));
       console.log('All GitHub API caches cleared! Refreshing page...');
@@ -43,8 +47,8 @@ const RepositoriesSection = () => {
     // Note: Caching is enabled to reduce API calls and improve performance
     
     // Try to get cached data first
-    const cachedData = localStorage.getItem('github-repos-cache');
-    const cacheTime = localStorage.getItem('github-repos-cache-time');
+    const cachedData = localStorage.getItem(REPOS_CACHE_KEY);
+    const cacheTime = localStorage.getItem(REPOS_CACHE_TIME_KEY);
     const now = Date.now();
     
     // Check cache validity (30 minutes cache)
@@ -69,8 +73,8 @@ const RepositoriesSection = () => {
         } else {
           // Clear old cache data that doesn't have subscriber counts
           console.log('Detected old cache data without subscriber counts, clearing cache...');
-          localStorage.removeItem('github-repos-cache');
-          localStorage.removeItem('github-repos-cache-time');
+          localStorage.removeItem(REPOS_CACHE_KEY);
+          localStorage.removeItem(REPOS_CACHE_TIME_KEY);
         }
       } catch (cacheError) {
         console.warn('Failed to parse cached data:', cacheError);
@@ -92,7 +96,7 @@ const RepositoriesSection = () => {
     // Try to fetch from GitHub API
     try {
       console.log('Fetching repositories from GitHub API...');
-      const reposResponse = await fetchGitHub('/users/UncleTyrone/repos?sort=updated&per_page=100');
+      const reposResponse = await fetchGitHub(getReposListPath());
       
       console.log('GitHub API response status:', reposResponse.status);
       console.log('GitHub API response headers:', reposResponse.headers);
@@ -126,8 +130,8 @@ const RepositoriesSection = () => {
 
         // Cache enriched data after successful fetch
         const mergedForCache = [...reposWithSubscribers, ...forksWithSubscribers];
-        localStorage.setItem('github-repos-cache', JSON.stringify(mergedForCache));
-        localStorage.setItem('github-repos-cache-time', now.toString());
+        localStorage.setItem(REPOS_CACHE_KEY, JSON.stringify(mergedForCache));
+        localStorage.setItem(REPOS_CACHE_TIME_KEY, now.toString());
       } else if (reposResponse.status === 403) {
         console.error('GitHub API rate limit exceeded');
         throw new Error('GitHub API rate limit exceeded. Please try again later.');

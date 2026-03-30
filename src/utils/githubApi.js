@@ -44,6 +44,18 @@ if (typeof window !== 'undefined') {
 
 const isDirectGitHub = (base) => base === DIRECT_GITHUB_API_BASE;
 
+/**
+ * Authenticated list (proxy + GITHUB_TOKEN): public + private repos you can access.
+ * Unauthenticated public API: only UncleTyrone's public repos.
+ */
+export const getReposListPath = () => {
+  const base = getApiBase();
+  if (isDirectGitHub(base)) {
+    return '/users/UncleTyrone/repos?sort=updated&per_page=100';
+  }
+  return '/user/repos?visibility=all&sort=updated&per_page=100';
+};
+
 export const fetchGitHub = async (path, options = {}) => {
   const base = getApiBase();
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
