@@ -76,6 +76,10 @@
   background: linear-gradient(135deg, rgba(45, 55, 72, 0.22) 0%, rgba(30, 41, 59, 0.16) 100%);
 }
 
+.discord-widget-rescheduled .discord-icon {
+  border: 2px solid #8ec86a;
+}
+
 .discord-widget-luanova .discord-icon {
   border: 2px solid #50c3ff;
   border-radius: 50%;
@@ -143,7 +147,7 @@
 }
 
 .highlight-rescheduled {
-  color: #5865f2;
+  color: #8ec86a;
   font-weight: 700;
 }
 
