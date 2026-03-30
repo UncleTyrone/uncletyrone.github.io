@@ -1,6 +1,6 @@
-# Rain/Kettu Devtools (LAN debugging)
+# Kettu Discord Devtools (LAN debugging)
 
-Debug Rain or Kettu on your phone by connecting to your PC over the local network.
+Debug Kettu on your phone by connecting to your PC over the local network.
 
 ## Quick start
 
@@ -12,7 +12,7 @@ Debug Rain or Kettu on your phone by connecting to your PC over the local networ
 
 2. **Note the printed URLs** (e.g. `ws://192.168.1.100:7864`).
 
-3. **In Rain/Kettu** on your phone:
+3. **In Kettu Discord** on your phone:
    - Open **Settings** → **Developer** (or **Debug**)
    - Set the **Devtools URL** to one of the printed URLs (use your PC’s IP)
 
@@ -21,7 +21,7 @@ Debug Rain or Kettu on your phone by connecting to your PC over the local networ
 ## Options
 
 ```bash
-node scripts/raindevtools-local.mjs --port 7864 --host 0.0.0.0
+node scripts/devtools-local.mjs --port 7864 --host 0.0.0.0
 ```
 
 - `--port, -p` — Port (default: 7864)
@@ -38,6 +38,6 @@ node scripts/raindevtools-local.mjs --port 7864 --host 0.0.0.0
 
 If BetterCode (or another plugin) installs but gets disabled, use the devtools connection to inspect the error:
 
-1. Connect Rain to the devtools server.
+1. Connect Kettu Discord to the devtools server.
 2. Check the server output for logs/errors.
 3. Use `.clients` to confirm the phone is connected.

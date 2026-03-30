@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Rain/Kettu devtools server bound to LAN (0.0.0.0) for phone debugging.
- * Compatible with raindevtools protocol. Rain on your phone connects TO this PC.
+ * Kettu Discord devtools server bound to LAN (0.0.0.0) for phone debugging.
+ * Compatible with devtools protocol. Kettu Discord on your phone connects TO this PC.
  */
 import * as http from "node:http";
 import * as os from "node:os";
@@ -87,7 +87,7 @@ function parseArgs() {
         host = hostValue;
       }
     } else if (arg === "--help") {
-      console.log("Usage: node raindevtools-local.mjs [options]");
+      console.log("Usage: node devtools-local.mjs [options]");
       console.log("");
       console.log("Options:");
       console.log("  --port, -p <port>    Port (default: 7864)");
@@ -181,7 +181,7 @@ server.listen(PORT, HOST, () => {
   const ips = getLocalIPs();
   logger.success(`Devtools server running on port ${PORT}`);
   logger.log("");
-  logger.log("Connect from your phone (Rain/Kettu) using one of these URLs:");
+  logger.log("Connect from your phone (Kettu Discord) using one of these URLs:");
   for (const ip of ips) {
     logger.log(`  ws://${ip}:${PORT}`);
   }
@@ -199,7 +199,7 @@ rl.on("line", (line) => {
     rl.prompt();
     return;
   }
-  const [command, ...args] = trimmed.split(/\s+/);
+  const command = trimmed.split(/\s+/)[0];
   switch (command) {
     case ".help":
     case "?":
@@ -214,6 +214,7 @@ rl.on("line", (line) => {
     case ".q":
       logger.warn("Shutting down...");
       process.exit(0);
+      break;
     case ".ls":
     case ".clients":
       if (clients.size === 0) {
