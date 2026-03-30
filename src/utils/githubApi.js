@@ -1,25 +1,43 @@
 const DIRECT_GITHUB_API_BASE = 'https://api.github.com';
 
-/** Production proxy on Render — set REACT_APP_GITHUB_PROXY_URL to override or use https://api.github.com for unauthenticated public API only. */
+/** Default Render proxy — always used unless you opt into public API (see below). */
 const DEFAULT_PROXY_BASE = 'https://github-proxy-service.onrender.com/api/github';
 
 const normalizeProxyBase = (raw) => {
   let base = raw.trim().replace(/\/$/, '');
-  if (!base.includes('/api/github') && base !== DIRECT_GITHUB_API_BASE) {
+  if (base === DIRECT_GITHUB_API_BASE) {
+    return base;
+  }
+  if (!base.includes('/api/github')) {
     base = `${base}/api/github`;
   }
   return base;
 };
 
+/**
+ * CRA merges env files; `.env.local` overrides `.env.production`.
+ * If REACT_APP_GITHUB_PROXY_URL is missing or wrongly set to https://api.github.com,
+ * we still use the Render proxy unless you set REACT_APP_USE_PUBLIC_GITHUB_API=true.
+ */
 const getApiBase = () => {
-  const fromEnv = process.env.REACT_APP_GITHUB_PROXY_URL?.trim();
-  if (fromEnv) {
-    return normalizeProxyBase(fromEnv);
+  const usePublic = process.env.REACT_APP_USE_PUBLIC_GITHUB_API === 'true';
+  if (usePublic) {
+    return DIRECT_GITHUB_API_BASE;
   }
-  return DEFAULT_PROXY_BASE;
+
+  const fromEnv = process.env.REACT_APP_GITHUB_PROXY_URL?.trim();
+  if (!fromEnv) {
+    return DEFAULT_PROXY_BASE;
+  }
+
+  const normalized = normalizeProxyBase(fromEnv);
+  if (normalized === DIRECT_GITHUB_API_BASE) {
+    return DEFAULT_PROXY_BASE;
+  }
+  return normalized;
 };
 
-/** Baked in at build time — in DevTools console run: window.__GITHUB_API_BASE__ */
+/** In DevTools: window.__GITHUB_API_BASE__ */
 if (typeof window !== 'undefined') {
   window.__GITHUB_API_BASE__ = getApiBase();
 }
